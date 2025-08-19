@@ -61,7 +61,7 @@ const fetchFromUniblock = async (symbols: string[]) => {
   const apiKey = import.meta.env.VITE_UNIBLOCK_API_KEY;
   if (!apiKey) throw new Error("UniBlock API key is missing.");
 
-  const apiUrl = `/api/uniblock/uni/v1/market-data/price?symbol=${symbols.join(',')}&currency=USD`;
+  const apiUrl = `https://api.uniblock.dev/uni/v1/market-data/price?symbol=ETH&currency=USD`;
 
   const response = await fetch(apiUrl, {
     headers: {
