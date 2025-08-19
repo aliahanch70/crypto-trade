@@ -1,324 +1,274 @@
-import React, { useState, useEffect } from 'react'
-import { Layout } from '../components/Layout'
-import { supabase } from '../lib/supabase'
-import { useAuth } from '../contexts/AuthContext'
-import type { Trade } from '../lib/supabase'
-import { 
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
+import React, { useState, useEffect, useMemo } from 'react';
+import { Layout } from '../components/Layout';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import type { Trade } from '../lib/supabase';
+import { Line, Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
   Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line
-} from 'recharts'
-import { BarChart3, PieChart as PieChartIcon, TrendingUp, Calendar } from 'lucide-react'
+  Legend,
+  Filler,
+} from 'chart.js';
+import { TrendingUp, TrendingDown, Target, Bot, CheckCircle, XCircle, Lightbulb } from 'lucide-react';
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler
+);
+
+// --- Helper Types & Functions ---
+
+interface AnalysisData {
+  totalPnl: number;
+  winRate: number;
+  averageWin: number;
+  averageLoss: number;
+  profitFactor: number;
+  pnlByEmotion: { [key: string]: number };
+  mostCommonMistake: { name: string; count: number; pnl: number } | null;
+}
+
+// The AI Coach's Logic
+const generateAiCoachAnalysis = (analysisData: AnalysisData) => {
+  const insights = [];
+
+  // Insight 1: Overall Performance
+  if (analysisData.totalPnl > 0) {
+    insights.push({ type: 'strength', text: `عملکرد کلی شما با ${analysisData.totalPnl.toFixed(2)}$ سود، مثبت است. این نشان می‌دهد که در مجموع در مسیر درستی قرار دارید.` });
+  } else {
+    insights.push({ type: 'weakness', text: `عملکرد کلی شما با ${Math.abs(analysisData.totalPnl).toFixed(2)}$ ضرر، منفی است. نیاز است استراتژی‌های خود را بازبینی کنید.` });
+  }
+
+  // Insight 2: Profit Factor
+  if (analysisData.profitFactor > 2) {
+    insights.push({ type: 'strength', text: `نسبت سود به ضرر شما (${analysisData.profitFactor.toFixed(2)}) فوق‌العاده است. شما به خوبی به سودها اجازه رشد می‌دهید و ضررها را به موقع کنترل می‌کنید.` });
+  } else if (analysisData.profitFactor < 1 && analysisData.profitFactor > 0) {
+    insights.push({ type: 'weakness', text: `میانگین ضرر شما از میانگین سودتان بزرگتر است (نسبت ${analysisData.profitFactor.toFixed(2)}). این یک زنگ خطر جدی است! روی مدیریت ریسک و بستن سریع‌تر پوزیشن‌های ضررده تمرکز کنید.` });
+  }
+
+  // Insight 3: Most common mistake and its cost
+  if (analysisData.mostCommonMistake?.name) {
+    const mistake = analysisData.mostCommonMistake;
+    if (mistake.pnl < 0) {
+      insights.push({ type: 'weakness', text: `شایع‌ترین اشتباه شما "${mistake.name}" بوده که مجموعاً ${Math.abs(mistake.pnl).toFixed(2)}$ برای شما هزینه داشته است. روی حذف این اشتباه تمرکز ویژه‌ای داشته باشید.` });
+    }
+  }
+
+  // Insight 4: Most impactful emotion
+  const emotions = Object.entries(analysisData.pnlByEmotion);
+  if (emotions.length > 0) {
+    const mostProfitableEmotion = emotions.reduce((max, item) => (item[1] > max[1] ? item : max), ['', -Infinity]);
+    const mostCostlyEmotion = emotions.reduce((min, item) => (item[1] < min[1] ? item : min), ['', Infinity]);
+
+    if (mostProfitableEmotion[1] > 0) {
+      insights.push({ type: 'strength', text: `به نظر می‌رسد زمانی که احساس "${mostProfitableEmotion[0]}" دارید، بهترین معاملات خود را انجام می‌دهید و مجموعاً ${mostProfitableEmotion[1].toFixed(2)}$ سود کرده‌اید.` });
+    }
+    if (mostCostlyEmotion[1] < 0) {
+       insights.push({ type: 'weakness', text: `معاملاتی که با احساس "${mostCostlyEmotion[0]}" انجام داده‌اید، بیشترین ضرر را با مجموع ${Math.abs(mostCostlyEmotion[1]).toFixed(2)}$ به شما وارد کرده‌اند. این یک الگوی رفتاری مهم است که باید به آن توجه کنید.` });
+    }
+  }
+
+  // Insight 5: Final Observation
+  insights.push({ type: 'observation', text: "به یاد داشته باشید که ژورنال‌نویسی مداوم، کلید شناسایی این الگوها و بهبود مستمر است. به کار خود ادامه دهید!" });
+
+  return insights;
+};
+
+// --- Main Component ---
 
 export function AnalyticsPage() {
-  const { user } = useAuth()
-  const [trades, setTrades] = useState<Trade[]>([])
-  const [loading, setLoading] = useState(true)
-
-  const fetchTrades = async () => {
-    if (!user) return
-
-    try {
-      const { data, error } = await supabase
-        .from('trades')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date_time', { ascending: true })
-
-      if (error) throw error
-      setTrades(data || [])
-    } catch (error) {
-      console.error('Error fetching trades:', error)
-    }
-
-    setLoading(false)
-  }
+  const { user } = useAuth();
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchTrades()
-  }, [user])
+    const fetchTrades = async () => {
+      if (!user) return;
+      try {
+        const { data, error } = await supabase
+          .from('trades')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('status', 'closed')
+          .order('date_time', { ascending: true });
 
-  // Prepare data for charts
-  const closedTrades = trades.filter(t => t.status === 'closed' && t.pnl !== null)
-  
-  // P&L over time
-  let runningPnL = 0
-  const pnlOverTime = closedTrades.map(trade => {
-    runningPnL += trade.pnl || 0
-    return {
-      date: new Date(trade.date_time).toLocaleDateString(),
-      pnl: runningPnL,
-      tradePnL: trade.pnl || 0
-    }
-  })
-
-  // Win/Loss ratio
-  const wins = closedTrades.filter(t => (t.pnl || 0) > 0).length
-  const losses = closedTrades.filter(t => (t.pnl || 0) < 0).length
-  const winLossData = [
-    { name: 'Wins', value: wins, color: '#10B981' },
-    { name: 'Losses', value: losses, color: '#EF4444' }
-  ]
-
-  // Performance by crypto pair
-  const pairPerformance = Object.entries(
-    trades.reduce((acc, trade) => {
-      if (!acc[trade.crypto_pair]) {
-        acc[trade.crypto_pair] = { pnl: 0, trades: 0 }
+        if (error) throw error;
+        setTrades(data || []);
+      } catch (error) {
+        console.error('Error fetching trades:', error);
       }
-      acc[trade.crypto_pair].pnl += trade.pnl || 0
-      acc[trade.crypto_pair].trades += 1
-      return acc
-    }, {} as Record<string, { pnl: number; trades: number }>)
-  ).map(([pair, data]) => ({
-    pair,
-    pnl: data.pnl,
-    trades: data.trades
-  })).sort((a, b) => b.pnl - a.pnl)
+      setLoading(false);
+    };
 
-  // Monthly performance
-  const monthlyPerformance = Object.entries(
-    closedTrades.reduce((acc, trade) => {
-      const month = new Date(trade.date_time).toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short' 
-      })
-      if (!acc[month]) acc[month] = 0
-      acc[month] += trade.pnl || 0
-      return acc
-    }, {} as Record<string, number>)
-  ).map(([month, pnl]) => ({ month, pnl }))
+    fetchTrades();
+  }, [user]);
+
+  const analysis = useMemo(() => {
+    if (trades.length < 3) return null;
+
+    // --- Data Processing ---
+    const winningTrades = trades.filter(t => (t.pnl || 0) > 0);
+    const losingTrades = trades.filter(t => (t.pnl || 0) < 0);
+
+    const totalPnl = trades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+    const winRate = (winningTrades.length / trades.length) * 100;
+    
+    const totalWinPnl = winningTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+    const totalLossPnl = losingTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+
+    const averageWin = winningTrades.length > 0 ? totalWinPnl / winningTrades.length : 0;
+    const averageLoss = losingTrades.length > 0 ? totalLossPnl / losingTrades.length : 0;
+    const profitFactor = averageWin > 0 && averageLoss < 0 ? Math.abs(averageWin / averageLoss) : 0;
+
+    // Cumulative P&L Data
+    let cumulativePnl = 0;
+    const cumulativePnlData = trades.map(t => {
+      cumulativePnl += t.pnl || 0;
+      return cumulativePnl;
+    });
+    const cumulativePnlLabels = trades.map((_, index) => `Trade ${index + 1}`);
+
+    // P&L by Pair Data
+    const pnlByPair = trades.reduce((acc, trade) => {
+      const pair = trade.crypto_pair;
+      if (!acc[pair]) acc[pair] = 0;
+      acc[pair] += trade.pnl || 0;
+      return acc;
+    }, {} as { [key: string]: number });
+    
+    const pnlByPairLabels = Object.keys(pnlByPair);
+    const pnlByPairData = Object.values(pnlByPair);
+
+    // AI Analysis Data
+    const pnlByEmotion = trades.reduce((acc, trade) => {
+        const emotion = trade.emotions?.trim();
+        if (emotion) { if (!acc[emotion]) acc[emotion] = 0; acc[emotion] += trade.pnl || 0; }
+        return acc;
+    }, {} as { [key: string]: number });
+    
+    const mistakeCounts = trades.reduce((acc, trade) => {
+        const mistake = trade.mistakes?.trim();
+        if (mistake) { if (!acc[mistake]) acc[mistake] = { count: 0, pnl: 0 }; acc[mistake].count += 1; acc[mistake].pnl += trade.pnl || 0; }
+        return acc;
+    }, {} as { [key: string]: { count: number, pnl: number } });
+
+    const mostCommonMistakeEntry = Object.entries(mistakeCounts).sort((a, b) => b[1].count - a[1].count)[0];
+    const mostCommonMistake = mostCommonMistakeEntry ? { name: mostCommonMistakeEntry[0], ...mostCommonMistakeEntry[1] } : null;
+
+    const analysisData: AnalysisData = { totalPnl, winRate, averageWin, averageLoss, profitFactor, pnlByEmotion, mostCommonMistake };
+    
+    return {
+      stats: { totalPnl, winRate, averageWin, averageLoss, profitFactor },
+      cumulativePnlChart: {
+        labels: cumulativePnlLabels,
+        datasets: [{ label: 'Cumulative P&L', data: cumulativePnlData, borderColor: totalPnl >= 0 ? 'rgb(52, 211, 153)' : 'rgb(248, 113, 113)', backgroundColor: totalPnl >= 0 ? 'rgba(52, 211, 153, 0.1)' : 'rgba(248, 113, 113, 0.1)', fill: true, tension: 0.2 }]
+      },
+      pnlByPairChart: {
+        labels: pnlByPairLabels,
+        datasets: [{ label: 'Total P&L by Pair', data: pnlByPairData, backgroundColor: pnlByPairData.map(pnl => pnl >= 0 ? 'rgba(52, 211, 153, 0.6)' : 'rgba(248, 113, 113, 0.6)'), borderWidth: 1 }]
+      },
+      aiInsights: generateAiCoachAnalysis(analysisData),
+    };
+  }, [trades]);
 
   if (loading) {
-    return (
-      <Layout>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-700 rounded w-1/4"></div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-80 bg-gray-700 rounded-xl"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </Layout>
-    )
+    return <Layout><div className="text-white text-center p-10">Loading analysis...</div></Layout>;
+  }
+  
+  if (!analysis) {
+    return <Layout><div className="text-white text-center p-10">برای نمایش تحلیل، حداقل به ۳ ترید بسته شده نیاز است.</div></Layout>;
   }
 
-  if (closedTrades.length === 0) {
-    return (
-      <Layout>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-bold text-white mb-8">Analytics</h1>
-          <div className="bg-gray-800/50 backdrop-blur-md rounded-xl p-8 border border-gray-700/50 text-center">
-            <BarChart3 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">No Data Available</h3>
-            <p className="text-gray-300 mb-4">
-              Complete some trades to see your analytics and performance insights.
-            </p>
-          </div>
-        </div>
-      </Layout>
-    )
-  }
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { 
+        x: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+        y: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
+    }
+  };
 
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Analytics</h1>
-          <p className="text-gray-300">Visualize your trading performance and patterns</p>
+        <h1 className="text-3xl font-bold text-white mb-8">Trading Analysis</h1>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <StatCard icon={<TrendingUp />} title="Win Rate" value={`${analysis.stats.winRate.toFixed(1)}%`} />
+            <StatCard icon={<TrendingUp className="text-emerald-400" />} title="Average Win" value={`$${analysis.stats.averageWin.toFixed(2)}`} />
+            <StatCard icon={<TrendingDown className="text-red-400" />} title="Average Loss" value={`$${Math.abs(analysis.stats.averageLoss).toFixed(2)}`} />
+            <StatCard icon={<Target />} title="Profit Factor" value={analysis.stats.profitFactor.toFixed(2)} />
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700/50 h-96">
+            <h2 className="text-xl font-semibold text-white mb-4">Cumulative P&L (Equity Curve)</h2>
+            <Line options={chartOptions} data={analysis.cumulativePnlChart} />
+          </div>
+          <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700/50 h-96">
+            <h2 className="text-xl font-semibold text-white mb-4">P&L by Pair</h2>
+            <Bar options={{...chartOptions, indexAxis: 'y' as const}} data={analysis.pnlByPairChart} />
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* P&L Over Time */}
-          <div className="bg-gray-800/50 backdrop-blur-md rounded-xl p-6 border border-gray-700/50">
-            <div className="flex items-center space-x-2 mb-4">
-              <TrendingUp className="h-6 w-6 text-emerald-400" />
-              <h3 className="text-xl font-semibold text-white">P&L Over Time</h3>
-            </div>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={pnlOverTime}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis 
-                    dataKey="date" 
-                    stroke="#9CA3AF"
-                    fontSize={12}
-                  />
-                  <YAxis 
-                    stroke="#9CA3AF"
-                    fontSize={12}
-                    formatter={(value) => `$${value.toFixed(0)}`}
-                  />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: '#1F2937',
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#F9FAFB'
-                    }}
-                    formatter={(value, name) => [
-                      `$${Number(value).toFixed(2)}`,
-                      name === 'pnl' ? 'Cumulative P&L' : 'Trade P&L'
-                    ]}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="pnl" 
-                    stroke="#10B981" 
-                    strokeWidth={2}
-                    dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Win/Loss Ratio */}
-          <div className="bg-gray-800/50 backdrop-blur-md rounded-xl p-6 border border-gray-700/50">
-            <div className="flex items-center space-x-2 mb-4">
-              <PieChartIcon className="h-6 w-6 text-blue-400" />
-              <h3 className="text-xl font-semibold text-white">Win/Loss Ratio</h3>
-            </div>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={winLossData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={120}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {winLossData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: '#1F2937',
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#F9FAFB'
-                    }}
-                    formatter={(value, name) => [value, name]}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex justify-center space-x-6 mt-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-                <span className="text-gray-300">Wins ({wins})</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                <span className="text-gray-300">Losses ({losses})</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Performance by Crypto Pair */}
-          <div className="bg-gray-800/50 backdrop-blur-md rounded-xl p-6 border border-gray-700/50">
-            <div className="flex items-center space-x-2 mb-4">
-              <BarChart3 className="h-6 w-6 text-purple-400" />
-              <h3 className="text-xl font-semibold text-white">Performance by Pair</h3>
-            </div>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={pairPerformance} layout="horizontal">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis 
-                    type="number" 
-                    stroke="#9CA3AF"
-                    fontSize={12}
-                    formatter={(value) => `$${value.toFixed(0)}`}
-                  />
-                  <YAxis 
-                    type="category" 
-                    dataKey="pair" 
-                    stroke="#9CA3AF"
-                    fontSize={12}
-                    width={80}
-                  />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: '#1F2937',
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#F9FAFB'
-                    }}
-                    formatter={(value, name) => [
-                      `$${Number(value).toFixed(2)}`,
-                      'P&L'
-                    ]}
-                  />
-                  <Bar 
-                    dataKey="pnl" 
-                    fill="#8B5CF6"
-                    radius={[0, 4, 4, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Monthly Performance */}
-          <div className="bg-gray-800/50 backdrop-blur-md rounded-xl p-6 border border-gray-700/50">
-            <div className="flex items-center space-x-2 mb-4">
-              <Calendar className="h-6 w-6 text-orange-400" />
-              <h3 className="text-xl font-semibold text-white">Monthly Performance</h3>
-            </div>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyPerformance}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis 
-                    dataKey="month" 
-                    stroke="#9CA3AF"
-                    fontSize={12}
-                  />
-                  <YAxis 
-                    stroke="#9CA3AF"
-                    fontSize={12}
-                    formatter={(value) => `$${value.toFixed(0)}`}
-                  />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: '#1F2937',
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#F9FAFB'
-                    }}
-                    formatter={(value, name) => [
-                      `$${Number(value).toFixed(2)}`,
-                      'Monthly P&L'
-                    ]}
-                  />
-                  <Bar 
-                    dataKey="pnl" 
-                    fill="#F97316"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+        <div className="bg-gray-900/50 p-6 rounded-xl border border-purple-500/30 ring-1 ring-purple-500/10 shadow-lg">
+          <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
+            <Bot className="mr-3 h-7 w-7 text-purple-400" />
+            AI Trading Coach
+          </h2>
+          <div className="space-y-4">
+            {analysis.aiInsights.map((insight, index) => (
+              <InsightCard key={index} type={insight.type as any} text={insight.text} />
+            ))}
           </div>
         </div>
       </div>
     </Layout>
-  )
+  );
 }
+
+// --- Helper Components ---
+
+const StatCard = ({ icon, title, value }: { icon: React.ReactNode, title: string, value: string }) => (
+    <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700/50">
+        <div className="flex items-center space-x-4 space-x-reverse">
+            <div className="text-blue-400">{icon}</div>
+            <div>
+                <p className="text-gray-400 text-sm">{title}</p>
+                <p className="text-2xl font-bold text-white">{value}</p>
+            </div>
+        </div>
+    </div>
+);
+
+const InsightCard = ({ type, text }: { type: 'strength' | 'weakness' | 'observation', text: string }) => {
+    const styles = {
+        strength: {
+            icon: <CheckCircle className="text-emerald-400" />,
+            borderColor: 'border-emerald-500/30',
+        },
+        weakness: {
+            icon: <XCircle className="text-red-400" />,
+            borderColor: 'border-red-500/30',
+        },
+        observation: {
+            icon: <Lightbulb className="text-blue-400" />,
+            borderColor: 'border-blue-500/30',
+        }
+    };
+    
+    return (
+        <div className={`flex items-start space-x-4 space-x-reverse rounded-lg p-4 bg-gray-800/60 border ${styles[type].borderColor}`}>
+            <div className="flex-shrink-0 mt-1">{styles[type].icon}</div>
+            <p className="text-gray-300 leading-relaxed">{text}</p>
+        </div>
+    );
+};

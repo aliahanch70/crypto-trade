@@ -105,6 +105,11 @@ export function LoginPage() {
                   Sign up
                 </Link>
               </p>
+              <div className="text-sm text-center">
+                <Link to="/forgot-password" className="font-medium text-emerald-400 hover:text-emerald-300">
+                  رمز عبور خود را فراموش کرده‌اید؟
+                </Link>
+              </div>
             </div>
           </div>
         </div>

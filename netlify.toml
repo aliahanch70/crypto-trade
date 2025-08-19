@@ -1,0 +1,27 @@
+# Proxy for CoinMarketCap
+[[redirects]]
+  from = "/api/cmc/*"
+  to = "https://pro-api.coinmarketcap.com/:splat"
+  status = 200
+  force = true
+  headers = { "X-CMC_PRO_API_KEY" = "41bd23ee-be92-41f1-81ce-e8a7b3402b40" }
+
+# Proxy for CoinCap
+[[redirects]]
+  from = "/api/coincap/*"
+  to = "https://api.coincap.io/:splat"
+  status = 200
+  force = true
+
+  # Proxy for CoinAPI
+[[redirects]]
+  from = "/api/coinapi/*"
+  to = "https://rest.coinapi.io/:splat"
+  status = 200
+  force = true
+
+  [[redirects]]
+  from = "/api/binance/*"
+  to = "https://api.binance.com/:splat"
+  status = 200
+  force = true

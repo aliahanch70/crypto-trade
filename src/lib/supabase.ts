@@ -20,8 +20,15 @@ export type Trade = {
   exit_price?: number
   stop_loss?: number
   take_profit?: number
+  leverage?: number
   pnl?: number
   notes?: string
   status: 'open' | 'closed'
-  created_at: string
+  created_at: string,
+  strategy?: string
+  market_conditions?: string
+  news_and_fundamentals?: string
+  emotions?: string
+  plan_adherence?: string
+  mistakes?: string
 }
