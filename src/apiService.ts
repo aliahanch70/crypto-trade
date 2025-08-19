@@ -56,6 +56,38 @@ const findCoinGeckoIdsBySymbols = (symbols: string[], coinList: any[]): string[]
 
 // --- API Providers ---
 
+const fetchFromUniblock = async (symbols: string[]) => {
+  console.log('Fallback 2: Attempting to fetch from UniBlock...');
+  // const apiKey = import.meta.env.VITE_UNIBLOCK_API_KEY;
+  // if (!apiKey) throw new Error("UniBlock API key is missing.");
+
+  const apiUrl = `https://api.uniblock.dev/uni/v1/market-data/price?symbol=BTC&currency=USD`;
+
+  const response = await fetch(apiUrl, {
+    headers: {
+      // 'X-API-KEY': apiKey,
+      'accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) throw new Error(`UniBlock request failed with status: ${response.status}`);
+
+  // UniBlock یک آرایه از نتایج برمی‌گرداند
+  const result = await response.json();
+  const prices: { [symbol: string]: number } = {};
+
+  for (const asset of result) {
+    if (asset.price) {
+      prices[asset.symbol.toUpperCase()] = parseFloat(asset.price);
+    }
+  }
+
+  if (Object.keys(prices).length === 0) throw new Error("No prices returned from UniBlock");
+
+  console.log('Successfully fetched from UniBlock');
+  return prices;
+};
+
 
 const fetchFromCoinApi = async (symbols: string[]) => {
   console.log('Fallback 1: Attempting to fetch from CoinAPI...');
@@ -153,7 +185,7 @@ const fetchFromCoinCap = async (symbols: string[]) => {
   
   // CoinCap needs asset IDs, which we can try to guess from symbols.
   // This is less reliable but works for major coins.
-  const response = await fetch(`https://api.coincap.io/v2/assets`);
+  const response = await fetch(`https://rest.coincap.io/v3/assets`);
   if (!response.ok) throw new Error('CoinCap assets list request failed');
   const { data: allAssets } = await response.json();
 
@@ -208,6 +240,9 @@ export const getLivePrices = async (symbols: string[], coinList: any[]) => {
   if (symbols.length === 0) return {};
   
   // --- Chain of API calls ---
+
+    try { return await fetchFromUniblock(symbols); }
+  catch (error) { console.warn('UniBlock failed:', error); }
 
     // 2. Try CoinAPI
   try { return await fetchFromCoinApi(symbols); }
