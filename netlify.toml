@@ -25,3 +25,10 @@
   to = "https://api.binance.com/:splat"
   status = 200
   force = true
+
+  # Proxy for UniBlock
+[[redirects]]
+  from = "/api/uniblock/*"
+  to = "https://api.uniblock.dev/:splat"
+  status = 200
+  force = true

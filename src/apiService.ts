@@ -58,14 +58,14 @@ const findCoinGeckoIdsBySymbols = (symbols: string[], coinList: any[]): string[]
 
 const fetchFromUniblock = async (symbols: string[]) => {
   console.log('Fallback 2: Attempting to fetch from UniBlock...');
-  // const apiKey = import.meta.env.VITE_UNIBLOCK_API_KEY;
-  // if (!apiKey) throw new Error("UniBlock API key is missing.");
+  const apiKey = import.meta.env.VITE_UNIBLOCK_API_KEY;
+  if (!apiKey) throw new Error("UniBlock API key is missing.");
 
-  const apiUrl = `https://api.uniblock.dev/uni/v1/market-data/price?symbol=BTC&currency=USD`;
+  const apiUrl = `/api/uniblock/uni/v1/market-data/price?symbol=${symbols.join(',')}&currency=USD`;
 
   const response = await fetch(apiUrl, {
     headers: {
-      // 'X-API-KEY': apiKey,
+      'X-API-KEY': apiKey,
       'accept': 'application/json',
     },
   });
