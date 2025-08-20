@@ -1,0 +1,34 @@
+{
+  "nav_dashboard": "Dashboard",
+  "nav_analysis": "Analysis",
+  "logout": "Log Out",
+  "title": "Dashboard Trades",
+  "subtitle": "Track and analyze your trading performance",
+  "add_trade_button": "Add Trade",
+  "stats": {
+    "total_trades": "Total Trades",
+    "successful_trades": "Successful Trades",
+    "failed_trades": "Failed Trades",
+    "average_profit": "Average Profit",
+    "total_profit": "Total Profit"
+  },
+  "trade_form": {
+    "title": "Trade Entry Form",
+    "fields": {
+      "pair": "Currency Pair",
+      "type": "Trade Type",
+      "amount": "Amount",
+      "price": "Price",
+      "date": "Date"
+    },
+    "submit_button": "Submit Trade"
+  },
+  "manual_close_form": {
+    "title": "Manual Trade Closure",
+    "fields": {
+      "trade_id": "Trade ID",
+      "close_price": "Close Price"
+    },
+    "submit_button": "Close Trade"
+  }
+}

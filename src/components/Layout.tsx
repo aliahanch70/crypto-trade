@@ -1,95 +1,207 @@
-// src/components/Layout.tsx
+import React, { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
+import { LogOut, TrendingUp, User, Menu, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next';
+import { NavLink } from 'react-router-dom';
 
-import React, { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom'; // یا هر ابزار ناوبری دیگر
-import { Menu, X, Bot } from 'lucide-react'; // Bot icon for branding
+function LanguageSwitcher() {
+  const { i18n } = useTranslation();
 
-type Props = {
-  children: React.ReactNode;
-};
+  const changeLanguage = (lng: string | undefined) => {
+    i18n.changeLanguage(lng);
+  };
+  
+  return (
+    <div>
+      <button onClick={() => changeLanguage('fa')} disabled={i18n.language === 'fa'}>FA</button>
+      <button onClick={() => changeLanguage('en')} disabled={i18n.language === 'en'}>EN</button>
+    </div>
+  );
+}
 
-export function Layout({ children }: Props) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+type LayoutProps = {
+  children: React.ReactNode
+  showNav?: boolean
+}
 
-  const navLinks = [
-    { name: 'Dashboard', path: '/' },
-    { name: 'Analysis', path: '/analysis' },
-  ];
+export function Layout({ children, showNav = true }: LayoutProps) {
+    const { t } = useTranslation('common'); // Namespace 'common' را مشخص می‌کنیم
+
+  const { user, signOut } = useAuth()
+  const navigate = useNavigate()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  const handleSignOut = async () => {
+    await signOut()
+    navigate('/')
+    setIsMenuOpen(false)
+  }
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen)
+  }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100">
-      <header className="bg-gray-800/50 backdrop-blur-md border-b border-gray-700/50 sticky top-0 z-40">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* بخش برند و لوگو */}
-            <div className="flex items-center">
-              <NavLink to="/" className="flex-shrink-0 flex items-center space-x-2">
-                <Bot className="h-8 w-8 text-emerald-400" />
-                <span className="text-xl font-bold text-white">TradeJournal</span>
-              </NavLink>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      {showNav && (
+        <nav className="bg-gray-800/50 backdrop-blur-md border-b border-gray-700/50 sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <Link to={user ? "/" : "/"} className="flex items-center space-x-2">
+                <TrendingUp className="h-8 w-8 text-emerald-400" />
+                <span className="text-xl font-bold text-white">CryptoJournal</span>
+              </Link>
 
-            {/* لینک‌های دسکتاپ */}
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                {navLinks.map((link) => (
-                  <NavLink
-                    key={link.name}
-                    to={link.path}
-                    className={({ isActive }) =>
-                      `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                        isActive
-                          ? ' text-white'
-                          : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                      }`
-                    }
-                  >
-                    {link.name}
-                  </NavLink>
-                ))}
-              </div>
-            </div>
-
-            {/* دکمه منوی همبرگری برای موبایل */}
-            <div className="-mr-2 flex md:hidden">
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none"
+              {/* Hamburger menu button for mobile */}
+              <button 
+                className="md:hidden text-gray-300 hover:text-white p-2"
+                onClick={toggleMenu}
               >
                 {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
+
+              {/* Desktop navigation */}
+              <div className="hidden md:flex md:items-center md:space-x-4">
+                {user ? (
+                  <>
+                    <Link 
+                      to="/dashboard" 
+                      className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link 
+                      to="/analytics" 
+                      className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                    >
+                      Analytics
+                    </Link>
+                                          <LanguageSwitcher />
+
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2 text-gray-300">
+                        <User className="h-4 w-4" />
+                        <span className="text-sm truncate max-w-[150px]">{user.email}</span>
+                      </div>
+                      <button
+                        onClick={handleSignOut}
+                        className="text-gray-300 hover:text-white p-2 rounded-md transition-colors"
+                        title="Sign Out"
+                      >
+                        <LogOut className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Link 
+                      to="/how-it-works" 
+                      className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                    >
+                      How It Works
+                    </Link>
+                    <Link 
+                      to="/contact" 
+                      className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                    >
+                      Contact
+                    </Link>
+                    <Link 
+                      to="/login" 
+                      className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                    >
+                      Login
+                    </Link>
+                    <Link 
+                      to="/signup" 
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                    >
+                      Sign Up
+                    </Link>
+                  </>
+                )}
+              </div>
             </div>
+
+            {/* Mobile menu */}
+            {isMenuOpen && (
+              <div className="md:hidden pb-4">
+                <div className="flex flex-col space-y-2 mt-4">
+                  {user ? (
+                    <>
+                      <Link 
+                        to="/dashboard" 
+                        className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        {t('nav_dashboard')}
+                      </Link>
+                      <Link 
+                        to="/analytics" 
+                        className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        {t('nav_analysis')}
+                      </Link>
+
+                      <LanguageSwitcher />
+                      <div className="flex items-center justify-between px-3 py-2">
+                        <div className="flex items-center space-x-2 text-gray-300">
+                          <User className="h-4 w-4" />
+                          <span className="text-sm truncate max-w-[200px]">{user.email}</span>
+                        </div>
+                        <button
+                          onClick={handleSignOut}
+                          className="text-gray-300 hover:text-white p-2 rounded-md transition-colors"
+                          title="Sign Out"
+                        >
+                          <LogOut className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Link 
+                        to="/how-it-works" 
+                        className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        How It Works
+                      </Link>
+                      <Link 
+                        to="/contact" 
+                        className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Contact
+                      </Link>
+                      <Link 
+                        to="/login" 
+                        className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Login
+                      </Link>
+                      <Link 
+                        to="/signup" 
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md text-base font-medium transition-colors mx-3"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Sign Up
+                      </Link>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </nav>
-
-        {/* منوی بازشونده موبایل */}
-        {isMenuOpen && (
-          <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              {navLinks.map((link) => (
-                <NavLink
-                  key={link.name}
-                  to={link.path}
-                  onClick={() => setIsMenuOpen(false)} // بستن منو بعد از کلیک
-                  className={({ isActive }) =>
-                    `block px-3 py-2 rounded-md text-base font-medium ${
-                      isActive
-                        ? 'bg-gray-900 text-white'
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`
-                  }
-                >
-                  {link.name}
-                </NavLink>
-              ))}
-            </div>
-          </div>
-        )}
-      </header>
-      <main>
-        {/* این بخش محتوای اصلی صفحات شما را نمایش می‌دهد */}
+      )}
+      
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6">
         {children}
       </main>
     </div>
-  );
+  )
 }
