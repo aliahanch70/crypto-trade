@@ -55,7 +55,7 @@ export function ContactPage() {
                       href="mailto:support@cryptojournal.com"
                       className="text-emerald-400 hover:text-emerald-300 transition-colors"
                     >
-                      support@cryptojournal.com
+                      aliahanch70@gmail.com
                     </a>
                   </div>
                 </div>

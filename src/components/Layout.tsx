@@ -1,99 +1,95 @@
-import React from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
-import { LogOut, TrendingUp, User } from 'lucide-react'
+// src/components/Layout.tsx
 
-type LayoutProps = {
-  children: React.ReactNode
-  showNav?: boolean
-}
+import React, { useState } from 'react';
+import { NavLink, Outlet } from 'react-router-dom'; // یا هر ابزار ناوبری دیگر
+import { Menu, X, Bot } from 'lucide-react'; // Bot icon for branding
 
-export function Layout({ children, showNav = true }: LayoutProps) {
-  const { user, signOut } = useAuth()
-  const navigate = useNavigate()
+type Props = {
+  children: React.ReactNode;
+};
 
-  const handleSignOut = async () => {
-    await signOut()
-    navigate('/')
-  }
+export function Layout({ children }: Props) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const navLinks = [
+    { name: 'Dashboard', path: '/' },
+    { name: 'Analysis', path: '/analysis' },
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-      {showNav && (
-        <nav className="bg-gray-800/50 backdrop-blur-md border-b border-gray-700/50 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <Link to={user ? "/dashboard" : "/"} className="flex items-center space-x-2">
-                <TrendingUp className="h-8 w-8 text-emerald-400" />
-                <span className="text-xl font-bold text-white">CryptoJournal</span>
-              </Link>
-              
-              <div className="flex items-center space-x-4">
-                {user ? (
-                  <>
-                    <Link 
-                      to="/dashboard" 
-                      className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                    >
-                      Dashboard
-                    </Link>
-                    <Link 
-                      to="/analytics" 
-                      className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                    >
-                      Analytics
-                    </Link>
-                    <div className="flex items-center space-x-3">
-                      <div className="flex items-center space-x-2 text-gray-300">
-                        <User className="h-4 w-4" />
-                        <span className="text-sm">{user.email}</span>
-                      </div>
-                      <button
-                        onClick={handleSignOut}
-                        className="text-gray-300 hover:text-white p-2 rounded-md transition-colors"
-                        title="Sign Out"
-                      >
-                        <LogOut className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <Link 
-                      to="/how-it-works" 
-                      className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                    >
-                      How It Works
-                    </Link>
-                    <Link 
-                      to="/contact" 
-                      className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                    >
-                      Contact
-                    </Link>
-                    <Link 
-                      to="/login" 
-                      className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                    >
-                      Login
-                    </Link>
-                    <Link 
-                      to="/signup" 
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                    >
-                      Sign Up
-                    </Link>
-                  </>
-                )}
+    <div className="min-h-screen bg-gray-900 text-gray-100">
+      <header className="bg-gray-800/50 backdrop-blur-md border-b border-gray-700/50 sticky top-0 z-40">
+        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* بخش برند و لوگو */}
+            <div className="flex items-center">
+              <NavLink to="/" className="flex-shrink-0 flex items-center space-x-2">
+                <Bot className="h-8 w-8 text-emerald-400" />
+                <span className="text-xl font-bold text-white">TradeJournal</span>
+              </NavLink>
+            </div>
+
+            {/* لینک‌های دسکتاپ */}
+            <div className="hidden md:block">
+              <div className="ml-10 flex items-baseline space-x-4">
+                {navLinks.map((link) => (
+                  <NavLink
+                    key={link.name}
+                    to={link.path}
+                    className={({ isActive }) =>
+                      `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        isActive
+                          ? ' text-white'
+                          : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                      }`
+                    }
+                  >
+                    {link.name}
+                  </NavLink>
+                ))}
               </div>
+            </div>
+
+            {/* دکمه منوی همبرگری برای موبایل */}
+            <div className="-mr-2 flex md:hidden">
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none"
+              >
+                {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
             </div>
           </div>
         </nav>
-      )}
-      
-      <main className="flex-1">
+
+        {/* منوی بازشونده موبایل */}
+        {isMenuOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+              {navLinks.map((link) => (
+                <NavLink
+                  key={link.name}
+                  to={link.path}
+                  onClick={() => setIsMenuOpen(false)} // بستن منو بعد از کلیک
+                  className={({ isActive }) =>
+                    `block px-3 py-2 rounded-md text-base font-medium ${
+                      isActive
+                        ? 'bg-gray-900 text-white'
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`
+                  }
+                >
+                  {link.name}
+                </NavLink>
+              ))}
+            </div>
+          </div>
+        )}
+      </header>
+      <main>
+        {/* این بخش محتوای اصلی صفحات شما را نمایش می‌دهد */}
         {children}
       </main>
     </div>
-  )
+  );
 }
