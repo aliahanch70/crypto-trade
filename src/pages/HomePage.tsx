@@ -17,6 +17,7 @@ export function HomePage() {
             <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
               A secure, private, and powerful trading journal to help you analyze your performance, 
               improve your strategy, and become a better trader.
+              sssssssssssssssssss
             </p>
             <div className="space-x-4">
               <Link
