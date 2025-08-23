@@ -1,0 +1,66 @@
+{
+  "title": "داشبورد معاملات",
+  "subtitle": "عملکرد معاملاتی خود را پیگیری و تحلیل کنید",
+  "add_trade_button": "افزودن معامله",
+  "stats": {
+    "total_trades": "تعداد کل معاملات",
+    "successful_trades": "معاملات موفق",
+    "failed_trades": "معاملات ناموفق",
+    "average_profit": "سود متوسط",
+    "total_profit": "سود کل"
+  },
+  "trade_form": {
+    "title": "فرم ثبت معامله",
+    "fields": {
+      "pair": "جفت ارز",
+      "type": "نوع معامله",
+      "amount": "مقدار",
+      "price": "قیمت",
+      "date": "تاریخ"
+    },
+    "submit_button": "ثبت معامله"
+  },
+  "manual_close_form": {
+    "title": "بستن دستی معامله",
+    "fields": {
+      "trade_id": "شناسه معامله",
+      "close_price": "قیمت بسته شدن"
+    },
+    "submit_button": "بستن معامله"
+  },
+  
+  "stat_total_trades": "کل تریدها",
+  "stat_open_positions": "پوزیشن‌های باز",
+  "stat_total_pnl": "سود و زیان کل",
+  "stat_win_rate": "نرخ برد",
+  "recent_trades": "معاملات اخیر",
+  "filter_all": "همه تریدها",
+  "filter_open": "پوزیشن‌های باز",
+  "filter_closed": "تریدهای بسته",
+  "empty_no_trades": "هنوز تریدی ثبت نشده است",
+  "empty_no_match": "هیچ تریدی با فیلتر فعلی مطابقت ندارد",
+  "table_header_date": "تاریخ",
+  "table_header_pair": "جفت‌ارز",
+  "table_header_direction": "جهت",
+  "table_header_size": "حجم",
+  "table_header_lev": "اهرم",
+  "table_header_entry": "ورود",
+  "table_header_exit": "خروج / فعلی",
+  "table_header_pnl": "سود/زیان",
+  "table_header_status": "وضعیت",
+  "table_header_actions": "عملیات",
+  "details_title": "جزئیات ژورنال",
+  "details_analysis_title": "تحلیل و دلایل",
+  "details_psychology_title": "روانشناسی",
+  "details_mistakes_title": "اشتباهات و نکات",
+  "details_strategy": "استراتژی",
+  "details_market_conditions": "شرایط بازار",
+  "details_news": "اخبار و فاندامنتال",
+  "details_emotions": "احساسات",
+  "details_plan_adherence": "پایبندی به برنامه",
+  "details_mistakes": "اشتباهات",
+  "details_notes": "یادداشت‌ها",
+  "confirm_close_title": "بستن پوزیشن",
+  "confirm_close_message": "آیا از بستن پوزیشن {{pair}} مطمئن هستید؟",
+  "alert_error_closing": "خطا در بستن ترید."
+}

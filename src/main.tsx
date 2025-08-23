@@ -1,15 +1,20 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { Suspense } from 'react';
-import App from './App.tsx';
+import React, { Suspense } from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.jsx';
 import './index.css';
-import './i18n'; // <- این خط مهم است
 
+// فایل i18n را اینجا import کنید
+import './i18n';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <Suspense fallback="Loading...">
-      <App />
-    </Suspense>
-  </StrictMode>
-);
+const rootElement = document.getElementById('root');
+if (rootElement) {
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <Suspense fallback="Loading translations...">
+        <App />
+      </Suspense>
+    </React.StrictMode>,
+  );
+} else {
+  throw new Error("Root element with id 'root' not found.");
+}

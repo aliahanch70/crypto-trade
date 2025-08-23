@@ -7,7 +7,8 @@ import {
   ChevronUp,
   ArrowUpRight,
   ArrowDownRight,
-  AlertTriangle
+  AlertTriangle,
+  Scissors 
 } from 'lucide-react';
 import type { Trade } from '../lib/supabase';
 
@@ -26,6 +27,8 @@ interface TradesTableProps {
   tradeToConfirmClose: Trade | null;
   setTradeToConfirmClose: React.Dispatch<React.SetStateAction<Trade | null>>;
   onConfirmClose: () => void;
+  onInitiatePartialClose: (trade: Trade) => void; // پراپ جدید
+
 }
 
 const formatPrice = (price: number | null | undefined): string => {
@@ -64,7 +67,8 @@ export function TradesTable({
   onAddTrade,
   tradeToConfirmClose,
   setTradeToConfirmClose,
-  onConfirmClose
+  onConfirmClose,
+  onInitiatePartialClose 
 }: TradesTableProps) {
   const toggleRowExpansion = (tradeId: string) => {
     setExpandedRows(prev =>
@@ -73,13 +77,19 @@ export function TradesTable({
   };
 
   const filteredTrades = trades.filter(trade => filterStatus === 'all' || trade.status === filterStatus);
+  const hasOpenTrades = trades.some(trade => trade.status === 'open');
 
   return (
     <>
       <div className="bg-gray-800/50 backdrop-blur-md rounded-xl border border-gray-700/50">
         <div className="p-6 border-b border-gray-700/50">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-            <h2 className="text-xl font-semibold text-white mb-4 sm:mb-0">Recent Trades</h2>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+          <h2 className="text-xl font-semibold text-white mb-4 sm:mb-0">Recent Trades</h2>
+          <div className="flex items-center space-x-4">
+            
+            {/* --- این دکمه‌ای است که باید اضافه شود --- */}
+            
+
             <div className="flex items-center space-x-2">
               <Filter className="h-5 w-5 text-gray-400" />
               <select 
@@ -94,6 +104,7 @@ export function TradesTable({
             </div>
           </div>
         </div>
+      </div>
 
         {/* Desktop Table */}
         <div className="overflow-x-auto hidden md:block">
@@ -180,7 +191,13 @@ export function TradesTable({
                           )}
                         </td>
                         <td className="p-4">
+                          
                           <div className="flex items-center space-x-2">
+                            {trade.status === 'open' && (
+                           <button onClick={() => onInitiatePartialClose(trade)} className="p-1 text-gray-400 hover:text-indigo-400" title="Close Partially">
+                              <Scissors size={16} />
+                           </button>
+                        )}
                             <button onClick={() => onEdit(trade)} className="p-1 text-gray-400 hover:text-blue-400">
                               <Pencil size={16} />
                             </button>
@@ -189,6 +206,7 @@ export function TradesTable({
                             </button>
                           </div>
                         </td>
+                        
                       </tr>
                       {isExpanded && (
                         <tr className="bg-gray-900/50">

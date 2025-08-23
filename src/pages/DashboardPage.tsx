@@ -9,6 +9,14 @@ import { useAuth } from '../contexts/AuthContext';
 import type { Trade } from '../lib/supabase';
 import { Plus } from 'lucide-react';
 import { getLivePrices } from '../apiService';
+import { useTranslation } from 'react-i18next';
+import { PartialCloseModal } from '../components/PartialCloseModal'; // <- مودال جدید
+import { ConfirmPartialCloseModal } from '../components/ConfirmPartialCloseModal'; // <- مودال جدید
+
+
+
+
+
 
 interface CoinListItem {
   id: string;
@@ -28,7 +36,15 @@ export function DashboardPage() {
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
   const [tradeAwaitingManualClose, setTradeAwaitingManualClose] = useState<Trade | null>(null);
   const [tradeToConfirmClose, setTradeToConfirmClose] = useState<Trade | null>(null);
+  const [tradeToPartialClose, setTradeToPartialClose] = useState<Trade | null>(null);
+  const [partialCloseDetails, setPartialCloseDetails] = useState<{ trade: Trade; percentage: number } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
+
+    const { t } = useTranslation('dashboard');
+
+  // اگر به متن‌های مشترک هم نیاز داشتید، می‌توانید دومی را هم فراخوانی کنید
+  const { t: tCommon } = useTranslation('common'); 
   // Fetch coin list
   useEffect(() => {
     const fetchCoinList = async () => {
@@ -55,24 +71,24 @@ export function DashboardPage() {
   }, []);
 
   // Fetch trades
-  useEffect(() => {
-    const fetchTrades = async () => {
-      if (!user) return;
-      try {
-        const { data, error } = await supabase
-          .from('trades')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('date_time', { ascending: false });
+  const fetchTrades = async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('trades')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('date_time', { ascending: false });
 
-        if (error) throw error;
-        setTrades(data || []);
-      } catch (error) {
-        console.error('Error fetching trades:', error);
-      }
-      setLoading(false);
-    };
-    
+      if (error) throw error;
+      setTrades(data || []);
+    } catch (error) {
+      console.error('Error fetching trades:', error);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
     if (user) {
       fetchTrades();
     }
@@ -138,8 +154,12 @@ export function DashboardPage() {
   };
 
   const handleConfirmClose = async () => {
-    if (!tradeToConfirmClose) return;
-    const trade = tradeToConfirmClose;
+  if (isSubmitting || !tradeToConfirmClose) return; // اگر در حال ارسال بود، خارج شو
+  
+  setIsSubmitting(true); // 1. حالت لودینگ را فعال کن
+  const trade = tradeToConfirmClose;
+  
+  try {
     const livePrice = livePrices[trade.id] || null;
     setTradeToConfirmClose(null);
     if (livePrice) {
@@ -147,7 +167,12 @@ export function DashboardPage() {
     } else {
       setTradeAwaitingManualClose(trade);
     }
-  };
+  } catch (error) {
+    console.error("Error in handleConfirmClose:", error);
+  } finally {
+    setIsSubmitting(false); // 2. در هر صورت (موفق یا ناموفق)، حالت لودینگ را غیرفعال کن
+  }
+};
 
   const handleManualCloseSubmit = async (exitPrice: number) => {
     if (!tradeAwaitingManualClose) return;
@@ -195,6 +220,82 @@ export function DashboardPage() {
     return pnl * (trade.leverage || 1);
   };
 
+  // (CHANGE 2) - تابع `handlePartialClose` با منطق اصلاح شده و نهایی
+  const handleConfirmPartialClose = async () => {
+    // اگر درخواستی در حال پردازش است یا جزئیات موجود نیست، خارج شو
+    if (isSubmitting || !partialCloseDetails) return;
+
+    // ۱. حالت لودینگ را برای جلوگیری از کلیک‌های تکراری، فعال کن
+    setIsSubmitting(true);
+    
+    const { trade, percentage } = partialCloseDetails;
+
+    try {
+        const exitPrice = livePrices[trade.id];
+        
+        // اگر قیمت لحظه‌ای موجود نبود، عملیات را متوقف کن
+        if (!exitPrice) {
+            alert("Live price is not available. Cannot close position.");
+            // finally بلاک همچنان اجرا خواهد شد تا لودینگ غیرفعال شود
+            return;
+        }
+
+        // --- محاسبات ---
+        const sizeToClose = trade.position_size * (percentage / 100);
+        const remainingSize = trade.position_size - sizeToClose;
+        const quantityToClose = sizeToClose / trade.entry_price;
+        const pnl = trade.direction.toLowerCase() === 'long'
+          ? (exitPrice - trade.entry_price) * quantityToClose
+          : (trade.entry_price - exitPrice) * quantityToClose;
+        const realizedPnl = pnl * (trade.leverage || 1);
+
+        // --- عملیات دیتابیس ---
+
+        // ۲. یک رکورد جدید "بسته شده" برای بخش فروخته شده ایجاد کن
+        const { error: insertError } = await supabase.from('trades').insert({
+            ...trade,
+            id: undefined, // به سوپابیس اجازه بده ID جدید بسازد
+            created_at: undefined,
+            position_size: sizeToClose,
+            status: 'closed',
+            exit_price: exitPrice,
+            pnl: realizedPnl,
+            notes: `Partial close (${percentage}%) of original trade ID: ${trade.id}`
+        });
+
+        if (insertError) throw insertError;
+
+        // ۳. رکورد "باز" اصلی را آپدیت یا حذف کن
+        if (percentage === 100) {
+            // اگر ۱۰۰٪ پوزیشن بسته شده، رکورد اصلی را حذف کن
+            const { error: deleteError } = await supabase.from('trades').delete().eq('id', trade.id);
+            if (deleteError) throw deleteError;
+        } else {
+            // اگر بخشی از پوزیشن بسته شده، فقط حجم رکورد اصلی را آپدیت کن
+            const { error: updateError } = await supabase.from('trades')
+                .update({ position_size: remainingSize })
+                .eq('id', trade.id);
+            if (updateError) throw updateError;
+        }
+
+        // ۴. لیست تریدها را مجدداً بارگذاری کن تا UI به‌روز شود
+        await fetchTrades();
+
+    } catch (error) {
+        console.error("Error during partial close:", error);
+        alert("An error occurred while closing the position. Please try again.");
+    } finally {
+        // ۵. در هر صورت (موفقیت یا شکست)، مودال و حالت لودینگ را ریست کن
+        setPartialCloseDetails(null);
+        setIsSubmitting(false);
+    }
+};
+
+  // (CHANGE 3) - این تابع، مودال تاییدیه را باز می‌کند
+  const initiatePartialCloseConfirmation = (trade: Trade, percentage: number) => {
+    setTradeToPartialClose(null); // بستن مودال اول (انتخاب درصد)
+    setPartialCloseDetails({ trade, percentage }); // باز کردن مودال دوم (تاییدیه)
+  };
   if (loading) {
     return (
       <Layout>
@@ -215,21 +316,21 @@ export function DashboardPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Trading Dashboard</h1>
-            <p className="text-gray-300">Track and analyze your trading performance</p>
+            <h1 className="text-3xl font-bold text-white mb-2">{t('title')}</h1>
+            <p className="text-gray-300">{t('subtitle')}</p>
           </div>
           <button
             onClick={() => setShowTradeForm(true)}
             className="mt-4 sm:mt-0 w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-3 rounded-lg flex items-center justify-center space-x-2 transition-colors"
           >
             <Plus className="h-5 w-5" />
-            <span>Add Trade</span>
+            <span>{t('add_trade_button')}</span>
           </button>
         </div>
 
         <DashboardStats trades={trades} calculateLivePnL={calculateLivePnL} />
 
-        <TradesTable
+       <TradesTable
           trades={trades}
           filterStatus={filterStatus}
           setFilterStatus={setFilterStatus}
@@ -244,6 +345,8 @@ export function DashboardPage() {
           tradeToConfirmClose={tradeToConfirmClose}
           setTradeToConfirmClose={setTradeToConfirmClose}
           onConfirmClose={handleConfirmClose}
+          onInitiatePartialClose={(trade) => setTradeToPartialClose(trade)}
+
         />
       </div>
 
@@ -262,6 +365,50 @@ export function DashboardPage() {
           tradeToEdit={editingTrade}
         />
       )}
+      {/* (CHANGE 4) - رندر کردن مودال جدید */}
+       {tradeToPartialClose && (
+        <PartialCloseModal
+            trade={tradeToPartialClose}
+            livePrice={livePrices[tradeToPartialClose.id]}
+            onClose={() => setTradeToPartialClose(null)}
+            onInitiatePartialClose={initiatePartialCloseConfirmation}
+        />
+      )}
+      {tradeToConfirmClose && (
+      <div className="fixed inset-0 ...">
+        <div className="bg-gray-800 ...">
+          <div className="p-6 text-center">
+            {/* ... (متن مودال) */}
+            <div className="flex justify-center ...">
+              <button
+                onClick={() => setTradeToConfirmClose(null)}
+                disabled={isSubmitting} // دکمه کنسل هم غیرفعال می‌شود
+                className="..."
+              >
+                {tCommon('cancel')}
+              </button>
+              <button
+                onClick={handleConfirmClose}
+                disabled={isSubmitting} // دکمه تایید غیرفعال می‌شود
+                className="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Closing...' : tCommon('yes_close')}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+      {/* مودال تاییدیه نهایی برای بستن بخشی از پوزیشن */}
+      {partialCloseDetails && (
+      <ConfirmPartialCloseModal
+        trade={partialCloseDetails.trade}
+        percentage={partialCloseDetails.percentage}
+        onCancel={() => setPartialCloseDetails(null)}
+        onConfirm={handleConfirmPartialClose}
+        isSubmitting={isSubmitting} // <- پراپ جدید برای مودال
+      />
+    )}
     </Layout>
   );
 }

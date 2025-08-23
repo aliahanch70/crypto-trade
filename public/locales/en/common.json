@@ -1,0 +1,10 @@
+{
+  "nav_dashboard": "Dashboard",
+  "nav_analysis": "Analysis",
+  "language": "Language",
+  "add_trade": "Add Trade",
+  "add_first_trade": "Add Your First Trade",
+  "cancel": "Cancel",
+  "yes_close": "Yes, Close",
+  "confirm_delete_message": "Are you sure you want to delete this trade?"
+}

@@ -1,0 +1,69 @@
+{
+  "nav_dashboard": "Dashboard",
+  "nav_analysis": "Analysis",
+  "logout": "Log Out",
+  "title": "Dashboard Trades",
+  "subtitle": "Track and analyze your trading performance",
+  "add_trade_button": "Add Trade",
+  "stats": {
+    "total_trades": "Total Trades",
+    "successful_trades": "Successful Trades",
+    "failed_trades": "Failed Trades",
+    "average_profit": "Average Profit",
+    "total_profit": "Total Profit"
+  },
+  "trade_form": {
+    "title": "Trade Entry Form",
+    "fields": {
+      "pair": "Currency Pair",
+      "type": "Trade Type",
+      "amount": "Amount",
+      "price": "Price",
+      "date": "Date"
+    },
+    "submit_button": "Submit Trade"
+  },
+  "manual_close_form": {
+    "title": "Manual Trade Closure",
+    "fields": {
+      "trade_id": "Trade ID",
+      "close_price": "Close Price"
+    },
+    "submit_button": "Close Trade"
+  },
+
+  "stat_total_trades": "Total Trades",
+  "stat_open_positions": "Open Positions",
+  "stat_total_pnl": "Total P&L",
+  "stat_win_rate": "Win Rate",
+  "recent_trades": "Recent Trades",
+  "filter_all": "All Trades",
+  "filter_open": "Open Positions",
+  "filter_closed": "Closed Trades",
+  "empty_no_trades": "No trades yet",
+  "empty_no_match": "No trades match the current filter",
+  "table_header_date": "Date",
+  "table_header_pair": "Pair",
+  "table_header_direction": "Direction",
+  "table_header_size": "Size",
+  "table_header_lev": "Lev",
+  "table_header_entry": "Entry",
+  "table_header_exit": "Exit / Current",
+  "table_header_pnl": "P&L",
+  "table_header_status": "Status",
+  "table_header_actions": "Actions",
+  "details_title": "Journal Details",
+  "details_analysis_title": "Analysis & Rationale",
+  "details_psychology_title": "Psychology",
+  "details_mistakes_title": "Mistakes & Notes",
+  "details_strategy": "Strategy",
+  "details_market_conditions": "Market Conditions",
+  "details_news": "News & Fundamentals",
+  "details_emotions": "Emotions",
+  "details_plan_adherence": "Plan Adherence",
+  "details_mistakes": "Mistakes",
+  "details_notes": "Notes",
+  "confirm_close_title": "Close Position",
+  "confirm_close_message": "Are you sure you want to close the {{pair}} position?",
+  "alert_error_closing": "Error closing trade."
+}

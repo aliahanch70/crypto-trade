@@ -5,20 +5,7 @@ import { LogOut, TrendingUp, User, Menu, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
 
-function LanguageSwitcher() {
-  const { i18n } = useTranslation();
-
-  const changeLanguage = (lng: string | undefined) => {
-    i18n.changeLanguage(lng);
-  };
-  
-  return (
-    <div>
-      <button onClick={() => changeLanguage('fa')} disabled={i18n.language === 'fa'}>FA</button>
-      <button onClick={() => changeLanguage('en')} disabled={i18n.language === 'en'}>EN</button>
-    </div>
-  );
-}
+import LanguageSwitcher from './LanguageSwitcher';
 
 type LayoutProps = {
   children: React.ReactNode

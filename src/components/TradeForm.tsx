@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { Plus, X, Calculator, Pencil } from 'lucide-react'
 import type { Trade } from '../lib/supabase' // Import Trade type
+import { useTranslation } from 'react-i18next';
 
 
 // (CHANGE 3.1) - A list of common crypto pairs for autocomplete
@@ -21,6 +22,8 @@ type TradeFormProps = {
 
 
 export function TradeForm({ onFormSubmit, onClose, tradeToEdit }: TradeFormProps) {
+    const { t } = useTranslation('dashboard');
+  const { t: tCommon } = useTranslation('common');
   const { user } = useAuth()
   const [formData, setFormData] = useState({
     date_time: new Date().toISOString().slice(0, 16),

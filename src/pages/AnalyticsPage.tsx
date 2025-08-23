@@ -17,6 +17,7 @@ import {
   Filler,
 } from 'chart.js';
 import { TrendingUp, TrendingDown, Target, Bot, CheckCircle, XCircle, Lightbulb } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 // Register Chart.js components
 ChartJS.register(
@@ -36,28 +37,28 @@ interface AnalysisData {
 }
 
 // The AI Coach's Logic
-const generateAiCoachAnalysis = (analysisData: AnalysisData) => {
+const generateAiCoachAnalysis = (analysisData: AnalysisData, t: any) => {
   const insights = [];
 
   // Insight 1: Overall Performance
   if (analysisData.totalPnl > 0) {
-    insights.push({ type: 'strength', text: `عملکرد کلی شما با ${analysisData.totalPnl.toFixed(2)}$ سود، مثبت است. این نشان می‌دهد که در مجموع در مسیر درستی قرار دارید.` });
+    insights.push({ type: 'strength', text: t('positivePerformance', { pnl: analysisData.totalPnl.toFixed(2) }) });
   } else {
-    insights.push({ type: 'weakness', text: `عملکرد کلی شما با ${Math.abs(analysisData.totalPnl).toFixed(2)}$ ضرر، منفی است. نیاز است استراتژی‌های خود را بازبینی کنید.` });
+    insights.push({ type: 'weakness', text: t('negativePerformance', { pnl: Math.abs(analysisData.totalPnl).toFixed(2) }) });
   }
 
   // Insight 2: Profit Factor
   if (analysisData.profitFactor > 2) {
-    insights.push({ type: 'strength', text: `نسبت سود به ضرر شما (${analysisData.profitFactor.toFixed(2)}) فوق‌العاده است. شما به خوبی به سودها اجازه رشد می‌دهید و ضررها را به موقع کنترل می‌کنید.` });
+    insights.push({ type: 'strength', text: t('excellentProfitFactor', { factor: analysisData.profitFactor.toFixed(2) }) });
   } else if (analysisData.profitFactor < 1 && analysisData.profitFactor > 0) {
-    insights.push({ type: 'weakness', text: `میانگین ضرر شما از میانگین سودتان بزرگتر است (نسبت ${analysisData.profitFactor.toFixed(2)}). این یک زنگ خطر جدی است! روی مدیریت ریسک و بستن سریع‌تر پوزیشن‌های ضررده تمرکز کنید.` });
+    insights.push({ type: 'weakness', text: t('poorProfitFactor', { factor: analysisData.profitFactor.toFixed(2) }) });
   }
 
   // Insight 3: Most common mistake and its cost
   if (analysisData.mostCommonMistake?.name) {
     const mistake = analysisData.mostCommonMistake;
     if (mistake.pnl < 0) {
-      insights.push({ type: 'weakness', text: `شایع‌ترین اشتباه شما "${mistake.name}" بوده که مجموعاً ${Math.abs(mistake.pnl).toFixed(2)}$ برای شما هزینه داشته است. روی حذف این اشتباه تمرکز ویژه‌ای داشته باشید.` });
+      insights.push({ type: 'weakness', text: t('commonMistake', { mistake: mistake.name, cost: Math.abs(mistake.pnl).toFixed(2) }) });
     }
   }
 
@@ -68,15 +69,15 @@ const generateAiCoachAnalysis = (analysisData: AnalysisData) => {
     const mostCostlyEmotion = emotions.reduce((min, item) => (item[1] < min[1] ? item : min), ['', Infinity]);
 
     if (mostProfitableEmotion[1] > 0) {
-      insights.push({ type: 'strength', text: `به نظر می‌رسد زمانی که احساس "${mostProfitableEmotion[0]}" دارید، بهترین معاملات خود را انجام می‌دهید و مجموعاً ${mostProfitableEmotion[1].toFixed(2)}$ سود کرده‌اید.` });
+      insights.push({ type: 'strength', text: t('bestEmotion', { emotion: mostProfitableEmotion[0], profit: mostProfitableEmotion[1].toFixed(2) }) });
     }
     if (mostCostlyEmotion[1] < 0) {
-       insights.push({ type: 'weakness', text: `معاملاتی که با احساس "${mostCostlyEmotion[0]}" انجام داده‌اید، بیشترین ضرر را با مجموع ${Math.abs(mostCostlyEmotion[1]).toFixed(2)}$ به شما وارد کرده‌اند. این یک الگوی رفتاری مهم است که باید به آن توجه کنید.` });
+      insights.push({ type: 'weakness', text: t('worstEmotion', { emotion: mostCostlyEmotion[0], loss: Math.abs(mostCostlyEmotion[1]).toFixed(2) }) });
     }
   }
 
   // Insight 5: Final Observation
-  insights.push({ type: 'observation', text: "به یاد داشته باشید که ژورنال‌نویسی مداوم، کلید شناسایی این الگوها و بهبود مستمر است. به کار خود ادامه دهید!" });
+  insights.push({ type: 'observation', text: t('finalObservation') });
 
   return insights;
 };
@@ -87,6 +88,7 @@ export function AnalyticsPage() {
   const { user } = useAuth();
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     const fetchTrades = async () => {
@@ -133,7 +135,7 @@ export function AnalyticsPage() {
       cumulativePnl += t.pnl || 0;
       return cumulativePnl;
     });
-    const cumulativePnlLabels = trades.map((_, index) => `Trade ${index + 1}`);
+    const cumulativePnlLabels = trades.map((_, index) => `${t('trade')} ${index + 1}`);
 
     // P&L by Pair Data
     const pnlByPair = trades.reduce((acc, trade) => {
@@ -168,22 +170,22 @@ export function AnalyticsPage() {
       stats: { totalPnl, winRate, averageWin, averageLoss, profitFactor },
       cumulativePnlChart: {
         labels: cumulativePnlLabels,
-        datasets: [{ label: 'Cumulative P&L', data: cumulativePnlData, borderColor: totalPnl >= 0 ? 'rgb(52, 211, 153)' : 'rgb(248, 113, 113)', backgroundColor: totalPnl >= 0 ? 'rgba(52, 211, 153, 0.1)' : 'rgba(248, 113, 113, 0.1)', fill: true, tension: 0.2 }]
+        datasets: [{ label: t('cumulativePnl'), data: cumulativePnlData, borderColor: totalPnl >= 0 ? 'rgb(52, 211, 153)' : 'rgb(248, 113, 113)', backgroundColor: totalPnl >= 0 ? 'rgba(52, 211, 153, 0.1)' : 'rgba(248, 113, 113, 0.1)', fill: true, tension: 0.2 }]
       },
       pnlByPairChart: {
         labels: pnlByPairLabels,
-        datasets: [{ label: 'Total P&L by Pair', data: pnlByPairData, backgroundColor: pnlByPairData.map(pnl => pnl >= 0 ? 'rgba(52, 211, 153, 0.6)' : 'rgba(248, 113, 113, 0.6)'), borderWidth: 1 }]
+        datasets: [{ label: t('pnlByPair'), data: pnlByPairData, backgroundColor: pnlByPairData.map(pnl => pnl >= 0 ? 'rgba(52, 211, 153, 0.6)' : 'rgba(248, 113, 113, 0.6)'), borderWidth: 1 }]
       },
-      aiInsights: generateAiCoachAnalysis(analysisData),
+      aiInsights: generateAiCoachAnalysis(analysisData, t),
     };
-  }, [trades]);
+  }, [trades, t]);
 
   if (loading) {
-    return <Layout><div className="text-white text-center p-10">Loading analysis...</div></Layout>;
+    return <Layout><div className="text-white text-center p-10">{t('loading')}</div></Layout>;
   }
   
   if (!analysis) {
-    return <Layout><div className="text-white text-center p-10">برای نمایش تحلیل، حداقل به ۳ ترید بسته شده نیاز است.</div></Layout>;
+    return <Layout><div className="text-white text-center p-10">{t('minTrades')}</div></Layout>;
   }
 
   const chartOptions = {
@@ -199,22 +201,22 @@ export function AnalyticsPage() {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-white mb-8">Trading Analysis</h1>
+        <h1 className="text-3xl font-bold text-white mb-8">{t('tradingAnalysis')}</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatCard icon={<TrendingUp />} title="Win Rate" value={`${analysis.stats.winRate.toFixed(1)}%`} />
-            <StatCard icon={<TrendingUp className="text-emerald-400" />} title="Average Win" value={`$${analysis.stats.averageWin.toFixed(2)}`} />
-            <StatCard icon={<TrendingDown className="text-red-400" />} title="Average Loss" value={`$${Math.abs(analysis.stats.averageLoss).toFixed(2)}`} />
-            <StatCard icon={<Target />} title="Profit Factor" value={analysis.stats.profitFactor.toFixed(2)} />
+            <StatCard icon={<TrendingUp />} title={t('winRate')} value={`${analysis.stats.winRate.toFixed(1)}%`} />
+            <StatCard icon={<TrendingUp className="text-emerald-400" />} title={t('averageWin')} value={`$${analysis.stats.averageWin.toFixed(2)}`} />
+            <StatCard icon={<TrendingDown className="text-red-400" />} title={t('averageLoss')} value={`$${Math.abs(analysis.stats.averageLoss).toFixed(2)}`} />
+            <StatCard icon={<Target />} title={t('profitFactor')} value={analysis.stats.profitFactor.toFixed(2)} />
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700/50 h-96">
-            <h2 className="text-xl font-semibold text-white mb-4">Cumulative P&L (Equity Curve)</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">{t('cumulativePnl')}</h2>
             <Line options={chartOptions} data={analysis.cumulativePnlChart} />
           </div>
           <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700/50 h-96">
-            <h2 className="text-xl font-semibold text-white mb-4">P&L by Pair</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">{t('pnlByPair')}</h2>
             <Bar options={{...chartOptions, indexAxis: 'y' as const}} data={analysis.pnlByPairChart} />
           </div>
         </div>
@@ -222,7 +224,7 @@ export function AnalyticsPage() {
         <div className="bg-gray-900/50 p-6 rounded-xl border border-purple-500/30 ring-1 ring-purple-500/10 shadow-lg">
           <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
             <Bot className="mr-3 h-7 w-7 text-purple-400" />
-            AI Trading Coach
+            {t('aiCoach')}
           </h2>
           <div className="space-y-4">
             {analysis.aiInsights.map((insight, index) => (
@@ -230,6 +232,14 @@ export function AnalyticsPage() {
             ))}
           </div>
         </div>
+
+        {/* Optional Language Switcher */}
+        <button 
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+          onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'fa' : 'en')}
+        >
+          {i18n.language === 'en' ? 'تغییر به فارسی' : 'Switch to English'}
+        </button>
       </div>
     </Layout>
   );
