@@ -374,31 +374,7 @@ export function DashboardPage() {
             onInitiatePartialClose={initiatePartialCloseConfirmation}
         />
       )}
-      {tradeToConfirmClose && (
-      <div className="fixed inset-0 ...">
-        <div className="bg-gray-800 ...">
-          <div className="p-6 text-center">
-            {/* ... (متن مودال) */}
-            <div className="flex justify-center ...">
-              <button
-                onClick={() => setTradeToConfirmClose(null)}
-                disabled={isSubmitting} // دکمه کنسل هم غیرفعال می‌شود
-                className="..."
-              >
-                {tCommon('cancel')}
-              </button>
-              <button
-                onClick={handleConfirmClose}
-                disabled={isSubmitting} // دکمه تایید غیرفعال می‌شود
-                className="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? 'Closing...' : tCommon('yes_close')}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )}
+      
       {/* مودال تاییدیه نهایی برای بستن بخشی از پوزیشن */}
       {partialCloseDetails && (
       <ConfirmPartialCloseModal

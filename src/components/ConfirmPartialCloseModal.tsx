@@ -40,7 +40,7 @@ export function ConfirmPartialCloseModal({ trade, percentage, onCancel, onConfir
                 onClick={onConfirm}
                 disabled={isSubmitting}
 
-              className="disabled:opacity-50 disabled:cursor-not-allowed px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors"
+              className="disabled:opacity-50 disabled:cursor-not-allowed px-6 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors"
             >
                {isSubmitting ? 'Confirming...' : 'Yes, Confirm'}
             </button>

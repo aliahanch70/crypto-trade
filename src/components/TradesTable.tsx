@@ -8,7 +8,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   AlertTriangle,
-  Scissors 
+  Scissors
 } from 'lucide-react';
 import type { Trade } from '../lib/supabase';
 
@@ -68,7 +68,7 @@ export function TradesTable({
   tradeToConfirmClose,
   setTradeToConfirmClose,
   onConfirmClose,
-  onInitiatePartialClose 
+  onInitiatePartialClose
 }: TradesTableProps) {
   const toggleRowExpansion = (tradeId: string) => {
     setExpandedRows(prev =>
@@ -83,28 +83,28 @@ export function TradesTable({
     <>
       <div className="bg-gray-800/50 backdrop-blur-md rounded-xl border border-gray-700/50">
         <div className="p-6 border-b border-gray-700/50">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-          <h2 className="text-xl font-semibold text-white mb-4 sm:mb-0">Recent Trades</h2>
-          <div className="flex items-center space-x-4">
-            
-            {/* --- این دکمه‌ای است که باید اضافه شود --- */}
-            
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+            <h2 className="text-xl font-semibold text-white mb-4 sm:mb-0">Recent Trades</h2>
+            <div className="flex items-center space-x-4">
 
-            <div className="flex items-center space-x-2">
-              <Filter className="h-5 w-5 text-gray-400" />
-              <select 
-                value={filterStatus} 
-                onChange={(e) => setFilterStatus(e.target.value as 'all' | 'open' | 'closed')} 
-                className="bg-gray-700/50 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"
-              >
-                <option value="all">All Trades</option>
-                <option value="open">Open Positions</option>
-                <option value="closed">Closed Trades</option>
-              </select>
+              {/* --- این دکمه‌ای است که باید اضافه شود --- */}
+
+
+              <div className="flex items-center space-x-2">
+                <Filter className="h-5 w-5 text-gray-400" />
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value as 'all' | 'open' | 'closed')}
+                  className="bg-gray-700/50 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"
+                >
+                  <option value="all">All Trades</option>
+                  <option value="open">Open Positions</option>
+                  <option value="closed">Closed Trades</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
         {/* Desktop Table */}
         <div className="overflow-x-auto hidden md:block">
@@ -155,8 +155,8 @@ export function TradesTable({
                         <td className="p-4 text-white font-medium">{trade.crypto_pair}</td>
                         <td className="p-4">
                           <div className="flex items-center space-x-1">
-                            {trade.direction.toLowerCase() === 'long' ? 
-                              <ArrowUpRight className="h-4 w-4 text-emerald-400" /> : 
+                            {trade.direction.toLowerCase() === 'long' ?
+                              <ArrowUpRight className="h-4 w-4 text-emerald-400" /> :
                               <ArrowDownRight className="h-4 w-4 text-red-400" />
                             }
                             <span className={trade.direction.toLowerCase() === 'long' ? 'text-emerald-400' : 'text-red-400'}>
@@ -177,27 +177,27 @@ export function TradesTable({
                         </td>
                         <td className="p-4">
                           {trade.status === 'open' ? (
-                            <button 
-                              onClick={() => onCloseTrade(trade)} 
-                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-500/40 transition-colors" 
-                              title="Click to close trade"
+                            <button
+                              onClick={() => onCloseTrade(trade)}
+                              className="px-3 py-1 text-xs font-medium bg-yellow-500/20 text-red-400 rounded-full border border-yellow-500/30 hover:bg-yellow-500/40"
                             >
-                              {trade.status}
+                              Close All
                             </button>
                           ) : (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-500/20 text-gray-400 border border-gray-500/30">
-                              {trade.status}
+                            <span className="px-3 py-1 text-xs font-medium bg-gray-500/20 text-gray-400 rounded-full border border-gray-500/30">
+                              CLOSED
                             </span>
                           )}
                         </td>
                         <td className="p-4">
-                          
-                          <div className="flex items-center space-x-2">
+
+                          <div className="flex justify-end  space-x-2">
                             {trade.status === 'open' && (
-                           <button onClick={() => onInitiatePartialClose(trade)} className="p-1 text-gray-400 hover:text-indigo-400" title="Close Partially">
-                              <Scissors size={16} />
-                           </button>
-                        )}
+                            <button onClick={() => onInitiatePartialClose(trade)} className="px-3 py-1 text-xs font-medium bg-yellow-500/20 text-yellow-400 rounded-full border border-yellow-500/30 hover:bg-yellow-500/40"
+                              title="Close Partially">
+                              Close %
+                            </button>
+                          )}
                             <button onClick={() => onEdit(trade)} className="p-1 text-gray-400 hover:text-blue-400">
                               <Pencil size={16} />
                             </button>
@@ -206,7 +206,7 @@ export function TradesTable({
                             </button>
                           </div>
                         </td>
-                        
+
                       </tr>
                       {isExpanded && (
                         <tr className="bg-gray-900/50">
@@ -239,7 +239,7 @@ export function TradesTable({
             </table>
           )}
         </div>
-        
+
         {/* Mobile View */}
         <div className="md:hidden">
           {filteredTrades.length === 0 ? (
@@ -270,8 +270,8 @@ export function TradesTable({
                           </div>
                         </div>
                         <div className="flex items-center space-x-1">
-                          {trade.direction.toLowerCase() === 'long' ? 
-                            <ArrowUpRight size={16} className="text-emerald-400" /> : 
+                          {trade.direction.toLowerCase() === 'long' ?
+                            <ArrowUpRight size={16} className="text-emerald-400" /> :
                             <ArrowDownRight size={16} className="text-red-400" />
                           }
                           <span className={`font-semibold ${trade.direction.toLowerCase() === 'long' ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -280,26 +280,26 @@ export function TradesTable({
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                        <InfoItem 
-                          label="P&L" 
-                          value={`$${pnl.toFixed(2)}`} 
-                          valueClassName={pnl >= 0 ? 'text-emerald-400 font-bold' : 'text-red-400 font-bold'} 
+                        <InfoItem
+                          label="P&L"
+                          value={`$${pnl.toFixed(2)}`}
+                          valueClassName={pnl >= 0 ? 'text-emerald-400 font-bold' : 'text-red-400 font-bold'}
                         />
                         <InfoItem label="Size" value={`$${trade.position_size.toFixed(2)}`} />
                         <InfoItem label="Entry" value={`$${formatPrice(trade.entry_price)}`} />
-                        <InfoItem 
-                          label="Exit / Current" 
-                          value={`$${isLive ? formatPrice(livePrices[trade.id]) : formatPrice(trade.exit_price)}`} 
+                        <InfoItem
+                          label="Exit / Current"
+                          value={`$${isLive ? formatPrice(livePrices[trade.id]) : formatPrice(trade.exit_price)}`}
                         />
                       </div>
                       <div className="flex items-center justify-between border-t border-gray-700/50 pt-4 mt-4">
                         <div>
                           {trade.status === 'open' ? (
-                            <button 
-                              onClick={() => onCloseTrade(trade)} 
-                              className="px-3 py-1 text-xs font-medium bg-yellow-500/20 text-yellow-400 rounded-full border border-yellow-500/30 hover:bg-yellow-500/40"
+                            <button
+                              onClick={() => onCloseTrade(trade)}
+                              className="px-3 py-1 text-xs font-medium bg-yellow-500/20 text-red-400 rounded-full border border-yellow-500/30 hover:bg-yellow-500/40"
                             >
-                              OPEN
+                              Close All
                             </button>
                           ) : (
                             <span className="px-3 py-1 text-xs font-medium bg-gray-500/20 text-gray-400 rounded-full border border-gray-500/30">
@@ -308,6 +308,13 @@ export function TradesTable({
                           )}
                         </div>
                         <div className="flex items-center space-x-1">
+
+                          {trade.status === 'open' && (
+                            <button onClick={() => onInitiatePartialClose(trade)} className="px-3 py-1 text-xs font-medium bg-yellow-500/20 text-yellow-400 rounded-full border border-yellow-500/30 hover:bg-yellow-500/40"
+                              title="Close Partially">
+                              Close %
+                            </button>
+                          )}
                           <button onClick={() => onEdit(trade)} className="p-2 text-gray-400 hover:text-blue-400">
                             <Pencil size={18} />
                           </button>
@@ -315,7 +322,7 @@ export function TradesTable({
                             <Trash2 size={18} />
                           </button>
                           <button onClick={() => toggleRowExpansion(trade.id)} className="p-2 text-gray-400 hover:text-white">
-                            {isExpanded ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}
+                            {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                           </button>
                         </div>
                       </div>
@@ -323,10 +330,10 @@ export function TradesTable({
                     {isExpanded && (
                       <div className="p-4 border-t border-gray-700/50 space-y-4">
                         <h4 className="font-semibold text-white">Journal Details</h4>
-                        <DetailItem label="Strategy" value={trade.strategy}/>
-                        <DetailItem label="Market Conditions" value={trade.market_conditions}/>
-                        <DetailItem label="Emotions" value={trade.emotions}/>
-                        <DetailItem label="Mistakes" value={trade.mistakes}/>
+                        <DetailItem label="Strategy" value={trade.strategy} />
+                        <DetailItem label="Market Conditions" value={trade.market_conditions} />
+                        <DetailItem label="Emotions" value={trade.emotions} />
+                        <DetailItem label="Mistakes" value={trade.mistakes} />
                       </div>
                     )}
                   </div>
@@ -350,14 +357,14 @@ export function TradesTable({
                 Are you sure you want to close the <span className="font-bold text-emerald-400">{tradeToConfirmClose.crypto_pair}</span> position?
               </p>
               <div className="flex justify-center space-x-4 space-x-reverse">
-                <button 
-                  onClick={() => setTradeToConfirmClose(null)} 
+                <button
+                  onClick={() => setTradeToConfirmClose(null)}
                   className="px-6 py-2 rounded-lg bg-gray-600/50 hover:bg-gray-600 text-white font-medium transition-colors"
                 >
                   Cancel
                 </button>
-                <button 
-                  onClick={onConfirmClose} 
+                <button
+                  onClick={onConfirmClose}
                   className="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors"
                 >
                   Yes, Close

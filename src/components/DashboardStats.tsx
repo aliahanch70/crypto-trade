@@ -23,9 +23,9 @@ export function DashboardStats({ trades, calculateLivePnL }: DashboardStatsProps
 
   return (
     // (CHANGE 2) - به‌روزرسانی گرید برای نمایش ۵ ستون در صفحات بزرگ
-    <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
-      <StatCard icon={<Activity className="h-8 w-8 text-blue-400" />} title="Total Trades" value={stats.totalTrades} />
-      <StatCard icon={<Calendar className="h-8 w-8 text-orange-400" />} title="Open Positions" value={stats.openTrades} />
+    <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-6 mb-8">
+      <StatCard icon={<Activity className="h-8 w-8 text-blue-400" />} title="Total/Open Trades" value={stats.totalTrades+" / "+stats.openTrades} />
+      {/* <StatCard icon={<Calendar className="h-8 w-8 text-orange-400" />} title="Open Positions" value={stats.openTrades} /> */}
       
       {/* (CHANGE 3) - کارت جدید برای Realized PNL */}
       <StatCard 
