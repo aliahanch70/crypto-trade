@@ -179,7 +179,7 @@ export function TradesTable({
                           {trade.status === 'open' ? (
                             <button
                               onClick={() => onCloseTrade(trade)}
-                              className="px-3 py-1 text-xs font-medium bg-yellow-500/20 text-red-400 rounded-full border border-yellow-500/30 hover:bg-yellow-500/40"
+                              className="min-w-[73px] min-h-[10px] px-3 py-1 text-xs font-medium bg-yellow-500/20 text-red-400 rounded-full border border-yellow-500/30 hover:bg-yellow-500/40"
                             >
                               Close All
                             </button>
@@ -193,7 +193,7 @@ export function TradesTable({
 
                           <div className="flex justify-end  space-x-2">
                             {trade.status === 'open' && (
-                            <button onClick={() => onInitiatePartialClose(trade)} className="px-3 py-1 text-xs font-medium bg-yellow-500/20 text-yellow-400 rounded-full border border-yellow-500/30 hover:bg-yellow-500/40"
+                            <button onClick={() => onInitiatePartialClose(trade)} className="min-w-[70px] px-3 py-1 text-xs font-medium bg-yellow-500/20 text-yellow-400 rounded-full border border-yellow-500/30 hover:bg-yellow-500/40"
                               title="Close Partially">
                               Close %
                             </button>
@@ -275,7 +275,7 @@ export function TradesTable({
                             <ArrowDownRight size={16} className="text-red-400" />
                           }
                           <span className={`font-semibold ${trade.direction.toLowerCase() === 'long' ? 'text-emerald-400' : 'text-red-400'}`}>
-                            {trade.direction.toUpperCase()}
+                            {trade.direction.toUpperCase()} {trade.leverage}X
                           </span>
                         </div>
                       </div>
