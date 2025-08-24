@@ -2,7 +2,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import fetch from 'node-fetch';
 
 // --- Types ---
-interface Profile { id: string; telegram_chat_id: string; full_name: string; }
+interface Profile { user_id: string; telegram_chat_id: string; full_name: string; }
 interface Trade { crypto_pair: string; direction: string; entry_price: number; leverage: number; }
 interface BinanceTicker { symbol: string; price: string; }
 
@@ -24,16 +24,15 @@ async function sendTelegramMessage(chatId: string, message: string, useMarkdown 
     } catch (error) { console.error("Telegram sendMessage failed:", error); return null; }
 }
 
-// (CHANGE 1) - The new, more reliable way to fetch trades
-async function getOpenTradesForUser(client: SupabaseClient, profileId: string): Promise<Trade[]> {
+async function getOpenTradesForUser(client: SupabaseClient, userId: string): Promise<Trade[]> {
     const { data, error } = await client
         .from('trades')
         .select('*')
-        .eq('user_id', profileId)
+        .eq('user_id', userId)
         .eq('status', 'open');
 
     if (error) {
-        console.error("Failed to fetch trades for user ID:", profileId, error);
+        console.error("Failed to fetch trades for user ID:", userId, error);
         return [];
     }
     return data || [];
@@ -89,21 +88,19 @@ export const handler = async (event: { body: string, httpMethod: string }) => {
     if (message && message.text === '/start') {
       const chatId = message.chat.id.toString();
       
-      // (CHANGE 2) - New 2-step logic
-      // Step 1: Find the user's profile using their chat ID
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('user_id, full_name') // <- Select user_id
         .eq('telegram_chat_id', chatId)
         .single();
       
       if (profileError || !profile) {
-        await sendTelegramMessage(chatId, "Sorry, your profile was not found. Please register your Chat ID in the web app.");
+        await sendTelegramMessage(chatId, "Your profile was not found. Please register your Chat ID in the web app first.");
         return { statusCode: 200, body: 'Profile not found' };
       }
 
-      // Step 2: Use the found profile ID to get their open trades
-      const openTrades = await getOpenTradesForUser(supabase, profile.id);
+      // Use profile.user_id to fetch trades
+      const openTrades = await getOpenTradesForUser(supabase, profile.user_id); 
       
       const symbols = Array.from(new Set(openTrades.map(t => t.crypto_pair.split('/')[0].toUpperCase())));
       const livePrices = await getLivePrices(symbols);
@@ -112,10 +109,11 @@ export const handler = async (event: { body: string, httpMethod: string }) => {
       const newMessageId = await sendTelegramMessage(chatId, reportText, true);
 
       if (newMessageId) {
+        // Update profile using user_id
         await supabase
           .from('profiles')
           .update({ last_report_message_id: newMessageId })
-          .eq('id', profile.id);
+          .eq('user_id', profile.user_id); 
       }
     }
 
