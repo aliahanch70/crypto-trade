@@ -168,7 +168,7 @@ function analyzeTrades(trades: Trade[], prices: Map<string, number>) {
     if (!currentPrice || !userChatId) continue;
 
     const pnlPercentage = ((currentPrice - trade.entry_price) / trade.entry_price) * trade.leverage * 100 * (trade.direction === 'long' ? 1 : -1);
-    const liquidationPrice = trade.direction === 'long'
+    const liquidationPrice = (trade.direction.toLowerCase() === 'long' ? 1 : -1)
       ? trade.entry_price * (1 - (1 / trade.leverage))
       : trade.entry_price * (1 + (1 / trade.leverage));
     const distanceToLiquidation = Math.abs((currentPrice - liquidationPrice) / liquidationPrice) * 100;
@@ -183,7 +183,7 @@ function analyzeTrades(trades: Trade[], prices: Map<string, number>) {
     if (!reports.has(userChatId)) {
       reports.set(userChatId, `📊 *Hi ${userName}, Your 5-Minute Open Positions Report:*\n\n`);
     }
-    const pnlStatus = pnlPercentage <= 0 ? '🟢' : '🔴';
+    const pnlStatus = pnlPercentage >= 0 ? '🟢' : '🔴';
     let reportEntry = reports.get(userChatId) || "";
     reportEntry += `🔹 *${trade.crypto_pair}* (${trade.direction})\n`;
     reportEntry += `   - PNL: ${pnlStatus} ${pnlPercentage.toFixed(2)}%\n`;
