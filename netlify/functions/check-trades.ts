@@ -27,12 +27,12 @@ interface BinanceTicker {
 // --- Environment Variables & Clients ---
 const {
   VITE_SUPABASE_URL,
-  VITE_SUPABASE_ANON_KEY,
+  SUPABASE_SERVICE_KEY,
   TELEGRAM_BOT_TOKEN,
   TELEGRAM_ADMIN_CHAT_ID,
 } = process.env;
 
-const supabase = createClient(VITE_SUPABASE_URL!, VITE_SUPABASE_ANON_KEY!);
+const supabase = createClient(VITE_SUPABASE_URL!, SUPABASE_SERVICE_KEY!);
 
 // ==================================================================
 // --- 1. Service Functions (توابع متخصص) ---
