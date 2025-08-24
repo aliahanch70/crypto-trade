@@ -25,7 +25,7 @@
   to = "https://api.binance.com/:splat"
   status = 200
   force = true
-
+  
   # Proxy for UniBlock
 [[redirects]]
   from = "/api/uniblock/*"
@@ -33,11 +33,12 @@
   status = 200
   force = true
 
-  # SPA Redirect Rule - This must be the last rule
+  # SPA Redirect Rule - This must be the last rule  
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
 
   [functions]
   directory = "netlify/functions"
