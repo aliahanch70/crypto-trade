@@ -44,4 +44,4 @@
   directory = "netlify/functions"
 
   [functions."check-trades"]
-  schedule = "*/2 * * * *"
+  schedule = "*/1 * * * *"
