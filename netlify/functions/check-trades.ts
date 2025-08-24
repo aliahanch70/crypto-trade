@@ -183,7 +183,7 @@ function analyzeTrades(trades: Trade[], prices: Map<string, number>) {
     if (!reports.has(userChatId)) {
       reports.set(userChatId, `📊 *Hi ${userName}, Your 5-Minute Open Positions Report:*\n\n`);
     }
-    const pnlStatus = pnlPercentage >= 0 ? '🟢' : '🔴';
+    const pnlStatus = pnlPercentage <= 0 ? '🟢' : '🔴';
     let reportEntry = reports.get(userChatId) || "";
     reportEntry += `🔹 *${trade.crypto_pair}* (${trade.direction})\n`;
     reportEntry += `   - PNL: ${pnlStatus} ${pnlPercentage.toFixed(2)}%\n`;
