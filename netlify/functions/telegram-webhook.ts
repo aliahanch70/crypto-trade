@@ -99,10 +99,12 @@ function buildReport(trades: Trade[], prices: Map<string, number>, userName: str
             const symbol = trade.crypto_pair.split('/')[0].toUpperCase();
             const currentPrice = prices.get(symbol);
             if (!currentPrice) continue;
+            const pnlPrice = ((currentPrice - trade.entry_price) / trade.entry_price) * trade.leverage * (trade.direction.toLowerCase() === 'long' ? 1 : -1);
+
             const pnlPercentage = ((currentPrice - trade.entry_price) / trade.entry_price) * trade.leverage * 100 * (trade.direction.toLowerCase() === 'long' ? 1 : -1);
             const pnlStatus = pnlPercentage >= 0 ? '🟢' : '🔴';
-            report += `🔹 *${trade.crypto_pair}* (${trade.direction.toUpperCase()})\n`;
-            report += `   - PNL: ${pnlStatus} ${pnlPercentage.toFixed(2)}%\n`;
+            report += `🔹 *${trade.crypto_pair}* (${trade.direction.toUpperCase()}) X${trade.leverage}\n`;
+            report += `   - PNL: ${pnlStatus} ${pnlPercentage.toFixed(2)}% ${pnlPrice}\n`;
             report += `   - Current Price: \`${currentPrice.toFixed(4)}\`\n\n`;
         }
     }
