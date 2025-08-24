@@ -186,6 +186,7 @@ export const handler = async () => {
     console.log("Function finished successfully.");
     return { statusCode: 200, body: JSON.stringify({ message: "Checks complete." }) };
   
+    
   } catch (error: any) {
     console.error("Function failed:", error);
     if (TELEGRAM_ADMIN_CHAT_ID) {
