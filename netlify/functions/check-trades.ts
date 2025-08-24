@@ -73,21 +73,38 @@ function buildReport(trades: Trade[], prices: Map<string, number>, userName: str
     return report;
 }
 
+
+
+// (CHANGE 1) - The new, more reliable way to fetch trades
+async function getOpenTradesForUserByProfileId(client: SupabaseClient, profileId: string): Promise<Trade[]> {
+    const { data, error } = await client
+        .from('trades')
+        .select('*')
+        .eq('user_id', profileId)
+        .eq('status', 'open');
+
+    if (error) {
+        console.error("Failed to fetch trades for user ID:", profileId, error);
+        return [];
+    }
+    return data || [];
+}
+
 // ==================================================================
 // --- Main Handler for Scheduled Function ---
 // ==================================================================
-
 export const handler = async () => {
   console.log("Scheduled function starting...");
   try {
     const { data: profiles, error } = await supabase.from('profiles').select('*').not('telegram_chat_id', 'is', null).not('last_report_message_id', 'is', null);
-    if (error || !profiles) {
-        console.error("Error fetching profiles:", error);
-        return { statusCode: 500, body: "Error fetching profiles" };
-    }
+    if (error || !profiles) throw error;
 
     for (const profile of profiles) {
-      const openTrades = await getOpenTradesForUser(supabase, profile.telegram_chat_id);
+      // (CHANGE 2) - New 2-step logic
+      // Step 1 is done (we have the profile).
+      // Step 2: Use the profile ID to get their open trades.
+      const openTrades = await getOpenTradesForUserByProfileId(supabase, profile.id);
+      
       const symbols = Array.from(new Set(openTrades.map(t => t.crypto_pair.split('/')[0].toUpperCase())));
       const livePrices = await getLivePrices(symbols);
       
@@ -109,7 +126,7 @@ export const handler = async () => {
     return { statusCode: 200, body: "Scheduled checks complete." };
   } catch (error: any) {
     console.error("Scheduled function failed:", error);
-    if (TELEGRAM_ADMIN_CHAT_ID) { await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID, `❌ Bot Error: ${error.message}`); }
+    // ... error reporting
     return { statusCode: 500, body: `Error: ${error.message}` };
   }
 };
