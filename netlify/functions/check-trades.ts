@@ -79,7 +79,7 @@ export const handler = async () => {
       if (adminProfile && adminProfile.full_name) {
         adminName = adminProfile.full_name;
       }
-      await sendTelegramNotification(TELEGRAM_ADMIN_CHAT_ID, `✅ Bot connected. Welcome, ${adminName}! Check started...`);
+      await sendTelegramNotification(TELEGRAM_ADMIN_CHAT_ID, `✅ Bot connected. Welcome, ${adminName}! Check started... `);
     }
 
     // 2. Fetch all open trades and their related profiles
@@ -101,6 +101,7 @@ export const handler = async () => {
       try {
         const binancePairs = symbols.map(s => `${s}USDT`);
         const priceResponse = await fetch(`https://api.binance.com/api/v3/ticker/price?symbols=${JSON.stringify(binancePairs)}`);
+        console.log("bibance price response", priceResponse);
         if (priceResponse.ok) {
             const allPrices = await priceResponse.json() as Array<{ symbol: string; price: string }>;
             allPrices.forEach((ticker: any) => {
