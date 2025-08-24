@@ -37,7 +37,7 @@ export const handler = async () => {
     const livePrices: { [key: string]: number } = {};
     if (symbols.length > 0) {
         const priceResponse = await fetch(`https://api.binance.com/api/v3/ticker/price?symbols=${JSON.stringify(symbols.map(s => `${s}USDT`))}`);
-        const allPrices = await priceResponse.json();
+        const allPrices = await priceResponse.json() as Array<{ symbol: string; price: string }>;
         allPrices.forEach((ticker: any) => {
             const symbol = ticker.symbol.replace('USDT', '');
             livePrices[symbol] = parseFloat(ticker.price);
