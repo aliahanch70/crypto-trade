@@ -77,6 +77,9 @@ function buildReport(trades: Trade[], prices: Map<string, number>, userName: str
 
 // (CHANGE 1) - The new, more reliable way to fetch trades
 async function getOpenTradesForUser(client: SupabaseClient, userId: string): Promise<Trade[]> {
+    // --- (DIAGNOSTIC LOG 1) ---
+    console.log(`[DEBUG] Querying trades for user_id: ${userId}`);
+
     const { data, error } = await client
         .from('trades')
         .select('*')
@@ -84,11 +87,15 @@ async function getOpenTradesForUser(client: SupabaseClient, userId: string): Pro
         .eq('status', 'open');
 
     if (error) {
-        console.error("Failed to fetch trades for user ID:", userId, error);
+        console.error("--> [DEBUG] Error fetching trades:", error.message);
         return [];
     }
+    
+    // --- (DIAGNOSTIC LOG 2) ---
+    console.log(`--> [DEBUG] Found ${data?.length || 0} open trades for this user.`);
     return data || [];
 }
+
 
 // ==================================================================
 // --- Main Handler for Scheduled Function ---
@@ -96,14 +103,20 @@ async function getOpenTradesForUser(client: SupabaseClient, userId: string): Pro
 export const handler = async () => {
   console.log("Scheduled function starting...");
   try {
-    const { data: profiles, error } = await supabase.from('profiles').select('*').not('telegram_chat_id', 'is', null).not('last_report_message_id', 'is', null);
+    const { data: profiles, error } = await supabase.from('profiles').select('*').not('telegram_chat_id', 'is', null);
     if (error || !profiles) {
         console.error("Error fetching profiles:", error);
         return { statusCode: 500, body: "Error fetching profiles" };
     }
+    
+    // --- (DIAGNOSTIC LOG 3) ---
+    console.log(`[DEBUG] Found ${profiles.length} total profiles with a chat_id.`);
 
     for (const profile of profiles) {
-      // Use profile.user_id to fetch trades
+      // --- (DIAGNOSTIC LOG 4) ---
+      console.log(`\n--- Processing profile: ${profile.full_name} ---`);
+      console.log(`[DEBUG] Profile's user_id from database is: ${profile.user_id}`);
+
       const openTrades = await getOpenTradesForUser(supabase, profile.user_id);
       
       const symbols = Array.from(new Set(openTrades.map(t => t.crypto_pair.split('/')[0].toUpperCase())));
@@ -117,7 +130,6 @@ export const handler = async () => {
         if (!success) {
           const newMessageId = await sendTelegramMessage(profile.telegram_chat_id, reportText, true);
           if (newMessageId) {
-            // Update profile using user_id
             await supabase.from('profiles').update({ last_report_message_id: newMessageId }).eq('user_id', profile.user_id);
           }
         }

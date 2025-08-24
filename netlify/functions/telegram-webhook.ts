@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 
 // --- Types ---
 interface Profile { user_id: string; telegram_chat_id: string; full_name: string; }
-interface Trade { crypto_pair: string; direction: string; entry_price: number; leverage: number; }
+interface Trade { user_id: string; crypto_pair: string; direction: string; entry_price: number; leverage: number; }
 interface BinanceTicker { symbol: string; price: string; }
 
 // --- Environment Variables & Clients ---
@@ -55,7 +55,7 @@ async function getLivePrices(symbols: string[]): Promise<Map<string, number>> {
 function buildReport(trades: Trade[], prices: Map<string, number>, userName: string): string {
     let report = `📊 *Hi ${userName}, Your Open Positions Report:*\n\n`;
     if (trades.length === 0) {
-        report = `✅ *Hi ${userName}, you currently have no open positions.*`;
+        report = `✅ *Hi ${userName}, you currently have no open positions. *`;
     } else {
         for (const trade of trades) {
             const symbol = trade.crypto_pair.split('/')[0].toUpperCase();
