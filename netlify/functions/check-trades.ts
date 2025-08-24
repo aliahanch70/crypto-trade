@@ -6,6 +6,8 @@ interface Profile {
   telegram_chat_id: string;
   profit_alert_percent: number;
   full_name: string;
+  // Add any other columns you have in your profiles table
+  [key: string]: any;
 }
 
 interface Trade {
@@ -72,25 +74,38 @@ export const handler = async () => {
   console.log("Function starting...");
 
   try {
-    // 1. Send a personalized startup message to the admin
+    // 1. Send a personalized startup message to the admin with all their profile data
     if (TELEGRAM_ADMIN_CHAT_ID) {
-      let adminName = 'Admin';
-      const { data: adminProfile } = await supabase
+      let welcomeMessage = "✅ Bot connected! Check started...";
+      
+      const { data: adminProfile, error } = await supabase
         .from('profiles')
-        .select('full_name')
+        .select('*') // Select all columns
         .eq('telegram_chat_id', TELEGRAM_ADMIN_CHAT_ID)
         .single();
 
-      if (adminProfile && adminProfile.full_name) {
-        adminName = adminProfile.full_name;
+      if (error) {
+         console.warn("Could not find admin profile, sending generic welcome message.");
+      } else if (adminProfile) {
+        let profileReport = `Welcome, ${adminProfile.full_name || 'Admin'}!\n\n`;
+        profileReport += "Found the following profile data for you:\n";
+        
+        for (const key in adminProfile) {
+          if (adminProfile[key] !== null && adminProfile[key] !== '') {
+            profileReport += `- *${key}*: \`${adminProfile[key]}\`\n`;
+          }
+        }
+        
+        welcomeMessage = `✅ Bot connected!\n\n${profileReport}`;
       }
-      await sendTelegramNotification(TELEGRAM_ADMIN_CHAT_ID, `✅ Bot connected. Welcome, ${adminName}! Check started...`);
+      
+      await sendTelegramNotification(TELEGRAM_ADMIN_CHAT_ID, welcomeMessage, true);
     }
 
     // 2. Fetch all open trades and their related profiles
     const { data: openTrades, error: tradesError } = await supabase
       .from('trades')
-      .select(`*, profiles (telegram_chat_id, profit_alert_percent, full_name)`)
+      .select(`*, profiles (*)`)
       .eq('status', 'open') as { data: Trade[] | null, error: any };
 
     if (tradesError) throw tradesError;
@@ -107,9 +122,7 @@ export const handler = async () => {
         const binancePairs = symbols.map(s => `${s}USDT`);
         const priceResponse = await fetch(`https://api.binance.com/api/v3/ticker/price?symbols=${JSON.stringify(binancePairs)}`);
         if (priceResponse.ok) {
-            // (CHANGE 2) - به تایپ‌اسکریپت می‌گوییم که خروجی چه نوعی خواهد داشت
             const allPrices = await priceResponse.json() as BinanceTicker[];
-            
             allPrices.forEach((ticker: BinanceTicker) => {
                 const symbol = ticker.symbol.replace('USDT', '');
                 livePrices[symbol] = parseFloat(ticker.price);
@@ -129,7 +142,6 @@ export const handler = async () => {
       const userChatId = trade.profiles?.telegram_chat_id;
       const userName = trade.profiles?.full_name || 'User';
 
-      // Skip if there's no price or the user hasn't set their chat ID
       if (!currentPrice || !userChatId) continue;
 
       // Calculations
@@ -144,32 +156,31 @@ export const handler = async () => {
       if (trade.profiles?.profit_alert_percent && pnlPercentage >= trade.profiles.profit_alert_percent) {
         urgentAlertMessage = `✅ Profit Alert for ${trade.crypto_pair}!\nCurrent PNL is ${pnlPercentage.toFixed(2)}%`;
       }
-      if (distanceToLiquidation < 5) { // e.g., less than 5% away from liquidation
+      if (distanceToLiquidation < 5) {
         urgentAlertMessage = `🚨 Liquidation Warning for ${trade.crypto_pair}!\nCurrent price is ${currentPrice}. Liquidation at approx. ${liquidationPrice.toFixed(4)}.`;
       }
       if (urgentAlertMessage) {
         await sendTelegramNotification(userChatId, urgentAlertMessage);
-        // Optional: Add logic to prevent sending the same alert repeatedly
       }
 
       // --- Logic for building the periodic 5-minute report ---
       if (!reportsByUser[userChatId]) {
         reportsByUser[userChatId] = {
           name: userName,
-          report: `📊 **Hi ${userName}, Your 5-Minute Open Positions Report:**\n\n`
+          report: `📊 *Hi ${userName}, Your 5-Minute Open Positions Report:*\n\n`
         };
       }
       
       const pnlStatus = pnlPercentage >= 0 ? '🟢' : '🔴';
-      reportsByUser[userChatId].report += `🔹 **${trade.crypto_pair}** (${trade.direction})\n`;
+      reportsByUser[userChatId].report += `🔹 *${trade.crypto_pair}* (${trade.direction})\n`;
       reportsByUser[userChatId].report += `   - PNL: ${pnlStatus} ${pnlPercentage.toFixed(2)}%\n`;
-      reportsByUser[userChatId].report += `   - Entry: ${trade.entry_price.toFixed(4)}\n`;
-      reportsByUser[userChatId].report += `   - Current: ${currentPrice.toFixed(4)}\n\n`;
+      reportsByUser[userChatId].report += `   - Entry: \`${trade.entry_price.toFixed(4)}\`\n`;
+      reportsByUser[userChatId].report += `   - Current: \`${currentPrice.toFixed(4)}\`\n\n`;
     }
 
     // 5. Send the consolidated reports to each user
     for (const chatId in reportsByUser) {
-      await sendTelegramNotification(chatId, reportsByUser[chatId].report, true); // parse_mode: Markdown
+      await sendTelegramNotification(chatId, reportsByUser[chatId].report, true);
     }
 
     console.log("Function finished successfully.");
