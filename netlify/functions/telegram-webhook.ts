@@ -2,16 +2,16 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import fetch from 'node-fetch';
 
 // --- Types ---
-interface Profile { id: string; telegram_chat_id: string; full_name: string; last_report_message_id: number | null; profit_alert_percent: number; }
+interface Profile { id: string; telegram_chat_id: string; full_name: string; }
 interface Trade { crypto_pair: string; direction: string; entry_price: number; leverage: number; profiles: Profile | null; }
 interface BinanceTicker { symbol: string; price: string; }
 
 // --- Environment Variables & Clients ---
-const { VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_ADMIN_CHAT_ID } = process.env;
+const { VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, TELEGRAM_BOT_TOKEN } = process.env;
 const supabase = createClient(VITE_SUPABASE_URL!, VITE_SUPABASE_ANON_KEY!);
 
 // ==================================================================
-// --- Service Functions (Shared Logic) ---
+// --- Service Functions (Needed for this webhook) ---
 // ==================================================================
 
 async function sendTelegramMessage(chatId: string, message: string, useMarkdown = false): Promise<number | null> {
@@ -22,15 +22,6 @@ async function sendTelegramMessage(chatId: string, message: string, useMarkdown 
         const data: any = await response.json();
         return data.result.message_id;
     } catch (error) { console.error("Telegram sendMessage failed:", error); return null; }
-}
-
-async function editTelegramMessage(chatId: string, messageId: number, message: string, useMarkdown = false): Promise<boolean> {
-    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`;
-    try {
-        const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: chatId, message_id: messageId, text: message, parse_mode: useMarkdown ? 'Markdown' : 'none' }) });
-        if (!response.ok) { console.warn(`Failed to edit message ${messageId}:`, await response.json()); return false; }
-        return true;
-    } catch (error) { console.error("Telegram editMessage failed:", error); return false; }
 }
 
 async function getOpenTradesForUser(client: SupabaseClient, chatId: string): Promise<Trade[]> {
@@ -74,42 +65,50 @@ function buildReport(trades: Trade[], prices: Map<string, number>, userName: str
 }
 
 // ==================================================================
-// --- Main Handler for Scheduled Function ---
+// --- Main Handler for the Webhook ---
 // ==================================================================
 
-export const handler = async () => {
-  console.log("Scheduled function starting...");
-  try {
-    const { data: profiles, error } = await supabase.from('profiles').select('*').not('telegram_chat_id', 'is', null).not('last_report_message_id', 'is', null);
-    if (error || !profiles) {
-        console.error("Error fetching profiles:", error);
-        return { statusCode: 500, body: "Error fetching profiles" };
-    }
+export const handler = async (event: { body: string, httpMethod: string }) => {
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Method Not Allowed' };
+  }
 
-    for (const profile of profiles) {
-      const openTrades = await getOpenTradesForUser(supabase, profile.telegram_chat_id);
+  try {
+    const body = JSON.parse(event.body);
+    const message = body.message;
+
+    if (message && message.text === '/start') {
+      const chatId = message.chat.id.toString();
+      
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('telegram_chat_id', chatId)
+        .single();
+      
+      if (profileError || !profile) {
+        await sendTelegramMessage(chatId, "Your profile was not found. Please register your Chat ID in the web app first.");
+        return { statusCode: 200, body: 'Profile not found' };
+      }
+
+      const openTrades = await getOpenTradesForUser(supabase, chatId);
       const symbols = Array.from(new Set(openTrades.map(t => t.crypto_pair.split('/')[0].toUpperCase())));
       const livePrices = await getLivePrices(symbols);
-      
       const reportText = buildReport(openTrades, livePrices, profile.full_name);
-      const lastMessageId = profile.last_report_message_id;
+      
+      const newMessageId = await sendTelegramMessage(chatId, reportText, true);
 
-      if (lastMessageId) {
-        const success = await editTelegramMessage(profile.telegram_chat_id, lastMessageId, reportText, true);
-        if (!success) {
-          const newMessageId = await sendTelegramMessage(profile.telegram_chat_id, reportText, true);
-          if (newMessageId) {
-            await supabase.from('profiles').update({ last_report_message_id: newMessageId }).eq('id', profile.id);
-          }
-        }
-      } 
+      if (newMessageId) {
+        await supabase
+          .from('profiles')
+          .update({ last_report_message_id: newMessageId })
+          .eq('id', profile.id);
+      }
     }
 
-    console.log("Scheduled function finished successfully.");
-    return { statusCode: 200, body: "Scheduled checks complete." };
+    return { statusCode: 200, body: 'OK' };
   } catch (error: any) {
-    console.error("Scheduled function failed:", error);
-    if (TELEGRAM_ADMIN_CHAT_ID) { await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID, `❌ Bot Error: ${error.message}`); }
+    console.error("Webhook failed:", error);
     return { statusCode: 500, body: `Error: ${error.message}` };
   }
 };
