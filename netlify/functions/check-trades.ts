@@ -97,13 +97,14 @@ export const handler = async () => {
   console.log("Scheduled function starting...");
   try {
     const { data: profiles, error } = await supabase.from('profiles').select('*').not('telegram_chat_id', 'is', null).not('last_report_message_id', 'is', null);
-    if (error || !profiles) throw error;
+    if (error || !profiles) {
+        console.error("Error fetching profiles:", error);
+        return { statusCode: 500, body: "Error fetching profiles" };
+    }
 
     for (const profile of profiles) {
-      // (CHANGE 2) - New 2-step logic
-      // Step 1 is done (we have the profile).
-      // Step 2: Use the profile ID to get their open trades.
-      const openTrades = await getOpenTradesForUser(supabase, profile.id);
+      // Use profile.user_id to fetch trades
+      const openTrades = await getOpenTradesForUser(supabase, profile.user_id);
       
       const symbols = Array.from(new Set(openTrades.map(t => t.crypto_pair.split('/')[0].toUpperCase())));
       const livePrices = await getLivePrices(symbols);
@@ -116,7 +117,8 @@ export const handler = async () => {
         if (!success) {
           const newMessageId = await sendTelegramMessage(profile.telegram_chat_id, reportText, true);
           if (newMessageId) {
-            await supabase.from('profiles').update({ last_report_message_id: newMessageId }).eq('id', profile.id);
+            // Update profile using user_id
+            await supabase.from('profiles').update({ last_report_message_id: newMessageId }).eq('user_id', profile.user_id);
           }
         }
       } 
@@ -126,7 +128,7 @@ export const handler = async () => {
     return { statusCode: 200, body: "Scheduled checks complete." };
   } catch (error: any) {
     console.error("Scheduled function failed:", error);
-    // ... error reporting
+    if (TELEGRAM_ADMIN_CHAT_ID) { await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID, `❌ Bot Error: ${error.message}`); }
     return { statusCode: 500, body: `Error: ${error.message}` };
   }
 };
