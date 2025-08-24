@@ -31,7 +31,7 @@ interface BinanceTicker {
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY!;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
-const TELEGRAM_ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID;
+const TELEGRAM_ADMIN_CHAT_ID = '140867059';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
