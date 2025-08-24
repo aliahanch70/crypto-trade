@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 
 // --- Types ---
 interface Profile { id: string; telegram_chat_id: string; full_name: string; last_report_message_id: number | null; profit_alert_percent: number; }
-interface Trade { crypto_pair: string; direction: string; entry_price: number; leverage: number; profiles: Profile | null; }
+interface Trade {position_size:number; crypto_pair: string; direction: string; entry_price: number; leverage: number; profiles: Profile | null; }
 interface BinanceTicker { symbol: string; price: string; }
 interface CoinListItem { id: string; symbol: string; name: string; }
 
@@ -51,12 +51,15 @@ function buildReport(trades: Trade[], prices: Map<string, number>, userName: str
             const symbol = trade.crypto_pair.split('/')[0].toUpperCase();
             const currentPrice = prices.get(symbol);
             if (!currentPrice) continue;
-            const pnlPrice = ((currentPrice - trade.entry_price) / trade.entry_price) * trade.leverage * (trade.direction.toLowerCase() === 'long' ? 1 : -1);
-
+            const quantity = trade.position_size / trade.entry_price;
+            const pnl = trade.direction.toLowerCase() === 'long'
+            ? (currentPrice - trade.entry_price) * quantity
+            : (trade.entry_price - currentPrice) * quantity;
+            const pnlPrice = pnl * (trade.leverage || 1);
             const pnlPercentage = ((currentPrice - trade.entry_price) / trade.entry_price) * trade.leverage * 100 * (trade.direction.toLowerCase() === 'long' ? 1 : -1);
             const pnlStatus = pnlPercentage >= 0 ? '🟢' : '🔴';
             report += `🔹 *${trade.crypto_pair}* (${trade.direction.toUpperCase()}) X${trade.leverage}\n`;
-            report += `   - PNL: ${pnlStatus} ${pnlPercentage.toFixed(2)}% ${pnlPrice}\n`;
+            report += `   - PNL: ${pnlStatus} ${pnlPercentage.toFixed(2)}%  ($${pnlPrice.toFixed(2)})\n`;
             report += `   - Current Price: \`${currentPrice.toFixed(4)}\`\n\n`;
         }
     }
