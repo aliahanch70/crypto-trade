@@ -1,7 +1,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // --- Types ---
-interface Profile { id: string; telegram_chat_id: string; full_name: string; }
+interface Profile { id: string; user_id:string; telegram_chat_id: string; full_name: string; }
 interface Trade { id: string; user_id: string; status: string; crypto_pair: string; }
 
 // --- Environment Variables & Clients ---
@@ -19,7 +19,7 @@ export const handler = async () => {
     console.log("\n[TEST 1] Fetching all profiles with a Telegram Chat ID...");
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
-      .select('id, full_name, telegram_chat_id')
+      .select('id,user_id, full_name, telegram_chat_id')
       .not('telegram_chat_id', 'is', null);
 
     if (profilesError) throw new Error(`Profile Fetch Error: ${profilesError.message}`);
@@ -34,7 +34,7 @@ export const handler = async () => {
 
     // تست ۲: برای هر پروفایل پیدا شده، تریدهای مربوط به آن را جستجو کن
     for (const profile of profiles) {
-      console.log(`\n[TEST 2] Checking trades for profile: ${profile.full_name} (ID: ${profile.id})`);
+      console.log(`\n[TEST 2] Checking trades for profile: ${profile.full_name} (ID: ${profile.id}) (userID: ${profile.user_id})`);
 
       // 2a: تمام تریدهای این کاربر را پیدا کن (بدون فیلتر status)
       const { data: allUserTrades, error: allTradesError } = await supabase
@@ -55,7 +55,7 @@ export const handler = async () => {
       const { data: openUserTrades, error: openTradesError } = await supabase
         .from('trades')
         .select('id, crypto_pair, status')
-        .eq('user_id', profile.id)
+        .eq('user_id', profile.user_id)
         .eq('status', 'open');
         
       if (openTradesError) {
