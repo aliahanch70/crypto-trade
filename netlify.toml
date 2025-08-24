@@ -38,3 +38,9 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+  [functions]
+  directory = "netlify/functions"
+
+  [functions."check-trades"]
+  schedule = "*/5 * * * *"
