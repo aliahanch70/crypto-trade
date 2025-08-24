@@ -167,25 +167,41 @@ function analyzeTrades(trades: Trade[], prices: Map<string, number>) {
     
     if (!currentPrice || !userChatId) continue;
 
-    const pnlPercentage = ((currentPrice - trade.entry_price) / trade.entry_price) * trade.leverage * 100 * (trade.direction === 'long' ? 1 : -1);
-    const liquidationPrice = (trade.direction.toLowerCase() === 'long' ? 1 : -1)
+    // ==================================================================
+    // --- (THE FIX) - بازنویسی کامل و واضح فرمول PNL ---
+    // ==================================================================
+    let pnlPercentage: number;
+    const isLong = trade.direction.toLowerCase() === 'long';
+    const priceChangeRatio = (currentPrice - trade.entry_price) / trade.entry_price;
+
+    if (isLong) {
+      // برای پوزیشن Long، سود زمانی است که قیمت بالا می‌رود (تغییر قیمت مثبت است).
+      pnlPercentage = priceChangeRatio * 100 * trade.leverage;
+    } else {
+      // برای پوزیشن Short، سود زمانی است که قیمت پایین می‌آید (تغییر قیمت منفی است).
+      // بنابراین ما باید علامت تغییر قیمت را معکوس کنیم.
+      pnlPercentage = priceChangeRatio * -1 * 100 * trade.leverage;
+    }
+    // ==================================================================
+    
+    const liquidationPrice = isLong
       ? trade.entry_price * (1 - (1 / trade.leverage))
       : trade.entry_price * (1 + (1 / trade.leverage));
     const distanceToLiquidation = Math.abs((currentPrice - liquidationPrice) / liquidationPrice) * 100;
 
+    // ... (بقیه منطق هشدارها و گزارش‌ها بدون تغییر)
     if (trade.profiles?.profit_alert_percent && pnlPercentage >= trade.profiles.profit_alert_percent) {
       alerts.push({ chatId: userChatId, message: `✅ Profit Alert for ${trade.crypto_pair}!\nCurrent PNL is ${pnlPercentage.toFixed(2)}%` });
     }
     if (distanceToLiquidation < 5) {
-      alerts.push({ chatId: userChatId, message: `🚨 Liquidation Warning for ${trade.crypto_pair}!\nCurrent price is ${currentPrice}. Liquidation at approx. ${liquidationPrice.toFixed(4)}.` });
+      alerts.push({ chatId: userChatId, message: `🚨 Liquidation Warning for ${trade.crypto_pair}!\nCurrent price is ${currentPrice}.` });
     }
-
     if (!reports.has(userChatId)) {
-      reports.set(userChatId, `📊 *Hi ${userName}, Your 5-Minute Open Positions Report:*\n\n`);
+      reports.set(userChatId, `📊 *Hi ${userName}, Your 5-Minute Report:*\n\n`);
     }
     const pnlStatus = pnlPercentage >= 0 ? '🟢' : '🔴';
     let reportEntry = reports.get(userChatId) || "";
-    reportEntry += `🔹 *${trade.crypto_pair}* (${trade.direction})\n`;
+    reportEntry += `🔹 *${trade.crypto_pair}* (${trade.direction.toUpperCase()})\n`;
     reportEntry += `   - PNL: ${pnlStatus} ${pnlPercentage.toFixed(2)}%\n`;
     reportEntry += `   - Current Price: \`${currentPrice.toFixed(4)}\`\n\n`;
     reports.set(userChatId, reportEntry);
