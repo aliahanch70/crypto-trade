@@ -88,7 +88,8 @@ export function AnalyticsPage() {
   const { user } = useAuth();
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation('analysis');
+  
 
   useEffect(() => {
     const fetchTrades = async () => {
@@ -180,9 +181,20 @@ export function AnalyticsPage() {
     };
   }, [trades, t]);
 
-  if (loading) {
-    return <Layout><div className="text-white text-center p-10">{t('loading')}</div></Layout>;
-  }
+    if (loading) {
+      return (
+        <Layout>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="animate-pulse space-y-6">
+              <div className="h-8 bg-gray-700 rounded w-1/4"></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, i) => <div key={i} className="h-32 bg-gray-700 rounded-xl"></div>)}
+              </div>
+            </div>
+          </div>
+        </Layout>
+      );
+    }
   
   if (!analysis) {
     return <Layout><div className="text-white text-center p-10">{t('minTrades')}</div></Layout>;
@@ -200,7 +212,7 @@ export function AnalyticsPage() {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 ltr">
         <h1 className="text-3xl font-bold text-white mb-8">{t('tradingAnalysis')}</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -233,13 +245,7 @@ export function AnalyticsPage() {
           </div>
         </div>
 
-        {/* Optional Language Switcher */}
-        <button 
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-          onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'fa' : 'en')}
-        >
-          {i18n.language === 'en' ? 'تغییر به فارسی' : 'Switch to English'}
-        </button>
+        
       </div>
     </Layout>
   );

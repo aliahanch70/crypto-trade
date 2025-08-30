@@ -1,9 +1,15 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext';
+
 import { Layout } from '../components/Layout'
 import { TrendingUp, Shield, BarChart3, Smartphone } from 'lucide-react'
+import { ArrowRight, Eye } from 'lucide-react';
 
 export function HomePage() {
+
+    const { enterDemoMode } = useAuth();
+
   return (
     <Layout>
       {/* Hero Section */}
@@ -19,19 +25,21 @@ export function HomePage() {
               improve your strategy, and become a better trader.
               
             </p>
-            <div className="space-x-4">
+            <div className="space-x-0 space-y-4 md:space-y-0 md:space-x-4 ">
               <Link
                 to="/signup"
                 className="inline-flex items-center px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-105"
               >
                 Start Trading Journal
               </Link>
-              <Link
-                to="/how-it-works"
-                className="inline-flex items-center px-8 py-3 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-lg border border-gray-600 transition-all duration-200"
-              >
-                Learn More
-              </Link>
+              <button
+            onClick={enterDemoMode}
+            className="inline-flex items-center px-8 py-3 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-lg border border-gray-600 transition-all duration-200"
+          >
+            {/* <Eye className="h-5 w-5" /> */}
+            <span>View Demo</span>
+          </button>
+              
             </div>
           </div>
         </div>

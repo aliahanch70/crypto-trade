@@ -28,7 +28,7 @@ interface TradesTableProps {
   setTradeToConfirmClose: React.Dispatch<React.SetStateAction<Trade | null>>;
   onConfirmClose: () => void;
   onInitiatePartialClose: (trade: Trade) => void; // پراپ جدید
-
+isDemoMode: boolean; // پراپ جدید
 }
 
 const formatPrice = (price: number | null | undefined): string => {
@@ -68,7 +68,8 @@ export function TradesTable({
   tradeToConfirmClose,
   setTradeToConfirmClose,
   onConfirmClose,
-  onInitiatePartialClose
+  onInitiatePartialClose,
+  isDemoMode
 }: TradesTableProps) {
   const toggleRowExpansion = (tradeId: string) => {
     setExpandedRows(prev =>
@@ -179,6 +180,8 @@ export function TradesTable({
                           {trade.status === 'open' ? (
                             <button
                               onClick={() => onCloseTrade(trade)}
+                              disabled={isDemoMode} // <- (CHANGE 2) غیرفعال کردن
+
                               className="min-w-[73px] min-h-[10px] px-3 py-1 text-xs font-medium bg-yellow-500/20 text-red-400 rounded-full border border-yellow-500/30 hover:bg-yellow-500/40"
                             >
                               Close All
@@ -193,15 +196,19 @@ export function TradesTable({
 
                           <div className="flex justify-end  space-x-2">
                             {trade.status === 'open' && (
-                            <button onClick={() => onInitiatePartialClose(trade)} className="min-w-[70px] px-3 py-1 text-xs font-medium bg-yellow-500/20 text-yellow-400 rounded-full border border-yellow-500/30 hover:bg-yellow-500/40"
+                            <button 
+                            disabled={isDemoMode} // <- (CHANGE 2) غیرفعال کردن
+
+                            onClick={() => onInitiatePartialClose(trade)} 
+                            className="min-w-[70px] px-3 py-1 text-xs font-medium bg-yellow-500/20 text-yellow-400 rounded-full border border-yellow-500/30 hover:bg-yellow-500/40"
                               title="Close Partially">
                               Close %
                             </button>
                           )}
-                            <button onClick={() => onEdit(trade)} className="p-1 text-gray-400 hover:text-blue-400">
+                            <button disabled={isDemoMode} onClick={() => onEdit(trade)} className="p-1 text-gray-400 hover:text-blue-400">
                               <Pencil size={16} />
                             </button>
-                            <button onClick={() => onDelete(trade.id)} className="p-1 text-gray-400 hover:text-red-400">
+                            <button disabled={isDemoMode} onClick={() => onDelete(trade.id)} className="p-1 text-gray-400 hover:text-red-400">
                               <Trash2 size={16} />
                             </button>
                           </div>
@@ -297,6 +304,8 @@ export function TradesTable({
                           {trade.status === 'open' ? (
                             <button
                               onClick={() => onCloseTrade(trade)}
+                              disabled={isDemoMode} // <- (CHANGE 2) غیرفعال کردن
+
                               className="px-3 py-1 text-xs font-medium bg-yellow-500/20 text-red-400 rounded-full border border-yellow-500/30 hover:bg-yellow-500/40"
                             >
                               Close All
@@ -310,18 +319,18 @@ export function TradesTable({
                         <div className="flex items-center space-x-1">
 
                           {trade.status === 'open' && (
-                            <button onClick={() => onInitiatePartialClose(trade)} className="px-3 py-1 text-xs font-medium bg-yellow-500/20 text-yellow-400 rounded-full border border-yellow-500/30 hover:bg-yellow-500/40"
+                            <button onClick={() => onInitiatePartialClose(trade)} disabled={isDemoMode} className="px-3 py-1 text-xs font-medium bg-yellow-500/20 text-yellow-400 rounded-full border border-yellow-500/30 hover:bg-yellow-500/40"
                               title="Close Partially">
                               Close %
                             </button>
                           )}
-                          <button onClick={() => onEdit(trade)} className="p-2 text-gray-400 hover:text-blue-400">
+                          <button disabled={isDemoMode} onClick={() => onEdit(trade)} className="p-2 text-gray-400 hover:text-blue-400">
                             <Pencil size={18} />
                           </button>
-                          <button onClick={() => onDelete(trade.id)} className="p-2 text-gray-400 hover:text-red-400">
+                          <button disabled={isDemoMode} onClick={() => onDelete(trade.id)} className="p-2 text-gray-400 hover:text-red-400">
                             <Trash2 size={18} />
                           </button>
-                          <button onClick={() => toggleRowExpansion(trade.id)} className="p-2 text-gray-400 hover:text-white">
+                          <button disabled={isDemoMode} onClick={() => toggleRowExpansion(trade.id)} className="p-2 text-gray-400 hover:text-white">
                             {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                           </button>
                         </div>
@@ -359,12 +368,15 @@ export function TradesTable({
               <div className="flex justify-center space-x-4 space-x-reverse">
                 <button
                   onClick={() => setTradeToConfirmClose(null)}
+                  
                   className="px-6 py-2 rounded-lg bg-gray-600/50 hover:bg-gray-600 text-white font-medium transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={onConfirmClose}
+                  disabled={isDemoMode} // <- (CHANGE 2) غیرفعال کردن
+
                   className="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors"
                 >
                   Yes, Close

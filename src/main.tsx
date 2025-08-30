@@ -1,20 +1,20 @@
 import React, { Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom'; // <- Import BrowserRouter
+import { AuthProvider } from './contexts/AuthContext'; // <- Import AuthProvider
 import App from './App.jsx';
+import './i18n';
 import './index.css';
 
-// فایل i18n را اینجا import کنید
-import './i18n';
-
-const rootElement = document.getElementById('root');
-if (rootElement) {
-  ReactDOM.createRoot(rootElement).render(
-    <React.StrictMode>
-      <Suspense fallback="Loading translations...">
-        <App />
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    {/* (FIX) - BrowserRouter باید والد AuthProvider باشد */}
+    <BrowserRouter>
+      <Suspense fallback="Loading...">
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </Suspense>
-    </React.StrictMode>,
-  );
-} else {
-  throw new Error("Root element with id 'root' not found.");
-}
+    </BrowserRouter>
+  </React.StrictMode>,
+);

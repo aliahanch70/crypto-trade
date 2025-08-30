@@ -6,5 +6,7 @@
   "add_first_trade": "اولین ترید خود را اضافه کنید",
   "cancel": "انصراف",
   "yes_close": "بله، ببند",
-  "confirm_delete_message": "آیا از حذف این ترید مطمئن هستید؟"
+  "confirm_delete_message": "آیا از حذف این ترید مطمئن هستید؟",
+    "nav_signup": "ثبت نام",
+  "nav_login": "ورود"
 }

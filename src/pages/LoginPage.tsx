@@ -5,12 +5,13 @@ import { Layout } from '../components/Layout'
 import { Lock, Mail, AlertCircle } from 'lucide-react'
 
 export function LoginPage() {
-  const { signIn } = useAuth()
+  const { signIn, enterDemoMode } = useAuth(); // <- enterDemoMode را بگیرید
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -98,6 +99,16 @@ export function LoginPage() {
               </button>
             </form>
 
+            <div className="mt-4 text-center">
+        <p className="text-gray-400">Or</p>
+        <button
+          onClick={enterDemoMode}
+          className="mt-2 font-semibold text-emerald-400 hover:text-emerald-300"
+        >
+          View Demo Dashboard
+        </button>
+      </div>
+
             <div className="mt-6 text-center">
               <p className="text-gray-400">
                 Don't have an account?{' '}
@@ -106,8 +117,8 @@ export function LoginPage() {
                 </Link>
               </p>
               <div className="text-sm text-center">
-                <Link to="/forgot-password" className="font-medium text-emerald-400 hover:text-emerald-300">
-                  رمز عبور خود را فراموش کرده‌اید؟
+                <Link to="/forgot-password" className=" font-medium text-emerald-400 hover:text-emerald-300">
+                  Forgot your password?
                 </Link>
               </div>
             </div>

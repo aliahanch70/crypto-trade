@@ -1,0 +1,21 @@
+{
+  "loading": "Loading analysis...",
+  "minTrades": "At least 3 closed trades are needed for analysis.",
+  "tradingAnalysis": "Trading Analysis",
+  "winRate": "Win Rate",
+  "averageWin": "Average Win",
+  "averageLoss": "Average Loss",
+  "profitFactor": "Profit Factor",
+  "cumulativePnl": "Cumulative P&L (Equity Curve)",
+  "pnlByPair": "P&L by Pair",
+  "aiCoach": "AI Trading Coach",
+  "trade": "Trade",
+  "positivePerformance": "Overall performance is positive with a profit of ${{pnl}}. You are on the right track. 🟢",
+  "negativePerformance": "Overall performance is negative with a loss of ${{pnl}}. It's time to review your strategies. 🔴",
+  "excellentProfitFactor": "Your profit factor ({{factor}}) is excellent. Your wins are significantly larger than your losses.",
+  "poorProfitFactor": "Your average loss is larger than your average win (factor: {{factor}}). This is a critical warning! Focus on risk management and cutting losses sooner.",
+  "commonMistake": "Your most common mistake, \"{{mistake}}\", has cost you a total of ${{cost}}.",
+  "bestEmotion": "You seem to perform best when feeling \"{{emotion}}\", earning a total of ${{profit}}.",
+  "worstEmotion": "Trades made while feeling \"{{emotion}}\" have cost you the most, with a total loss of ${{loss}}.",
+  "finalObservation": "Remember that consistent journaling is the key to identifying these patterns and achieving continuous improvement. Keep up the great work!"
+}

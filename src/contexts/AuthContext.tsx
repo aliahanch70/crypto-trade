@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState ,  } from 'react'
 import { supabase } from '../lib/supabase'
 import type { User } from '@supabase/supabase-js'
+import { Link, useNavigate } from 'react-router-dom'
+
 
 type AuthContextType = {
   user: User | null
@@ -9,6 +11,8 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<any>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<any>
+  isDemoMode: boolean;
+  enterDemoMode: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -24,6 +28,8 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+    const [isDemoMode, setIsDemoMode] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Get initial session
@@ -66,11 +72,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signOut,
     resetPassword,
-  }
+  isDemoMode,
+    enterDemoMode: () => {
+      setIsDemoMode(true);
+      navigate('/dashboard'); // یا هر مسیری که می‌خواهید
+    },
+    exitDemoMode: () => {
+      setIsDemoMode(false);
+      navigate('/');
+    },
+  };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

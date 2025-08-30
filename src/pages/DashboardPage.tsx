@@ -25,7 +25,7 @@ interface CoinListItem {
 }
 
 export function DashboardPage() {
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth(); // <- isDemoMode را بگیرید
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [showTradeForm, setShowTradeForm] = useState(false);
@@ -72,27 +72,67 @@ export function DashboardPage() {
 
   // Fetch trades
   const fetchTrades = async () => {
-    if (!user) return;
-    try {
-      const { data, error } = await supabase
-        .from('trades')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date_time', { ascending: false });
+      // (CHANGE 3) - منطق جدید برای دریافت داده‌ها
+      const userIdToFetch = isDemoMode 
+        ? import.meta.env.VITE_DEMO_ADMIN_USER_ID 
+        : user?.id;
 
-      if (error) throw error;
-      setTrades(data || []);
-    } catch (error) {
-      console.error('Error fetching trades:', error);
-    }
-    setLoading(false);
-  };
+      if (!userIdToFetch) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('trades')
+          .select('*')
+          .eq('user_id', userIdToFetch)
+          .order('date_time', { ascending: false });
+        
+        if (error) throw error;
+        setTrades(data || []);
+      } catch (err) { console.error('Error fetching trades:', err); }
+      setLoading(false);
+    };
 
   useEffect(() => {
     if (user) {
       fetchTrades();
     }
   }, [user]);
+
+  useEffect(() => {
+  const fetchTrades = async () => {
+    setLoading(true); // لودینگ را در ابتدای اجرا فعال کن
+
+    const userIdToFetch = isDemoMode 
+      ? import.meta.env.VITE_DEMO_ADMIN_USER_ID 
+      : user?.id;
+
+    // اگر شناسه‌ای برای دریافت داده وجود نداشت
+    if (!userIdToFetch) {
+      console.warn("No user ID or demo admin ID available. Cannot fetch trades.");
+      setTrades([]); // لیست تریدها را خالی کن
+      setLoading(false); // (FIX) لودینگ را در هر صورت متوقف کن
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('trades')
+        .select('*')
+        .eq('user_id', userIdToFetch)
+        .order('date_time', { ascending: false });
+      
+      if (error) throw error;
+      setTrades(data || []);
+    } catch (err) { 
+      console.error('Error fetching trades:', err);
+      setTrades([]); // در صورت خطا هم لیست را خالی کن
+    } finally {
+      setLoading(false); // در هر صورت (موفق یا ناموفق)، لودینگ را متوقف کن
+    }
+  };
+  
+  fetchTrades();
+}, [user, isDemoMode]);
 
   // Fetch live prices
   useEffect(() => {
@@ -321,6 +361,8 @@ export function DashboardPage() {
           </div>
           <button
             onClick={() => setShowTradeForm(true)}
+                    disabled={isDemoMode} // <- غیرفعال کردن
+
             className="mt-4 sm:mt-0 w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-3 rounded-lg flex items-center justify-center space-x-2 transition-colors"
           >
             <Plus className="h-5 w-5" />
@@ -331,6 +373,8 @@ export function DashboardPage() {
         <DashboardStats trades={trades} calculateLivePnL={calculateLivePnL} />
 
        <TradesTable
+               isDemoMode={isDemoMode} // <- پراپ جدید برای غیرفعال کردن دکمه‌ها در کامپوننت فرزند
+
           trades={trades}
           filterStatus={filterStatus}
           setFilterStatus={setFilterStatus}
