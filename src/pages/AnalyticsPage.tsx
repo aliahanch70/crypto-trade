@@ -122,10 +122,9 @@ export function AnalyticsPage() {
 
     const totalPnl = trades.reduce((sum, t) => sum + (t.pnl || 0), 0);
     const winRate = (winningTrades.length / trades.length) * 100;
-    
+
     const totalWinPnl = winningTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
     const totalLossPnl = losingTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
-
     const averageWin = winningTrades.length > 0 ? totalWinPnl / winningTrades.length : 0;
     const averageLoss = losingTrades.length > 0 ? totalLossPnl / losingTrades.length : 0;
     const profitFactor = averageWin > 0 && averageLoss < 0 ? Math.abs(averageWin / averageLoss) : 0;
